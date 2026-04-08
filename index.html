@@ -230,7 +230,7 @@ function updateUI() {
 }
 
 function goTo(index, direction) {
-  if (index === current) return;
+  if (index < 0 || index >= total || index === current) return;
 
   resetZoom();
 
@@ -352,14 +352,12 @@ gallery.addEventListener('touchmove', e => {
 
       slides[current].style.transform = `translateX(${dragX}px)`;
 
-      if (dragX < 0) {
-        const next = current + 1 < total ? current + 1 : 0;
-        slides[next].style.transform = `translateX(calc(100% + ${dragX}px))`;
-        slides[next].classList.add('active');
-      } else if (dragX > 0) {
-        const prev = current - 1 >= 0 ? current - 1 : total - 1;
-        slides[prev].style.transform = `translateX(calc(-100% + ${dragX}px))`;
-        slides[prev].classList.add('active');
+      if (dragX < 0 && current < total - 1) {
+        slides[current + 1].style.transform = `translateX(calc(100% + ${dragX}px))`;
+        slides[current + 1].classList.add('active');
+      } else if (dragX > 0 && current > 0) {
+        slides[current - 1].style.transform = `translateX(calc(-100% + ${dragX}px))`;
+        slides[current - 1].classList.add('active');
       }
     }
   }
@@ -384,9 +382,9 @@ gallery.addEventListener('touchend', e => {
     slides[current].style.transform = '';
 
     if (dragX < -SWIPE_THRESHOLD) {
-      goTo(current + 1 < total ? current + 1 : 0,  1);
+      goTo(current + 1,  1);
     } else if (dragX > SWIPE_THRESHOLD) {
-      goTo(current - 1 >= 0 ? current - 1 : total - 1, -1);
+      goTo(current - 1, -1);
     }
   }
 
@@ -419,8 +417,8 @@ gallery.addEventListener('touchend', e => {
 
 // ── Keyboard navigation (desktop) ─────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight') goTo(current + 1 < total ? current + 1 : 0,  1);
-  if (e.key === 'ArrowLeft')  goTo(current - 1 >= 0 ? current - 1 : total - 1, -1);
+  if (e.key === 'ArrowRight') goTo(current + 1,  1);
+  if (e.key === 'ArrowLeft')  goTo(current - 1, -1);
   if (e.key === 'Escape')     resetZoom();
 });
 
