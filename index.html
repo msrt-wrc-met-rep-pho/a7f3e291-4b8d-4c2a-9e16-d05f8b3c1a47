@@ -78,25 +78,7 @@
     border: 1px solid rgba(255,255,255,0.15);
   }
 
-  /* Stage label */
-  #stage-label {
-    position: fixed;
-    top: 16px;
-    left: 16px;
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 5px 11px;
-    border-radius: 20px;
-    pointer-events: none;
-    z-index: 10;
-    border: 1px solid rgba(255,255,255,0.15);
-  }
+
 
   /* Dot strip at bottom */
   #dots {
@@ -144,7 +126,6 @@
 </head>
 <body>
 
-<div id="stage-label">CRO26_SS18_1</div>
 <div id="counter">1 / N</div>
 <div id="dots"></div>
 <div id="gallery"></div>
@@ -156,18 +137,14 @@ const IMAGES = [
     "SS18_502.jpg",
     "SS18_503.jpg"
 ];
-const STAGE  = "CRO26_SS18_1";
 // ──────────────────────────────────────────────────────────────────────────
 
 const gallery  = document.getElementById('gallery');
 const counter  = document.getElementById('counter');
 const dotsEl   = document.getElementById('dots');
-const stageEl  = document.getElementById('stage-label');
 
 let current = 0;
 const total = IMAGES.length;
-
-stageEl.textContent = STAGE;
 
 // Build slides
 const slides = IMAGES.map((src, i) => {
