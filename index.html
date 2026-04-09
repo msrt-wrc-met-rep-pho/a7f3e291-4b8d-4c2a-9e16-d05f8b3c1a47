@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Rally Gallery</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -13,7 +13,6 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     height: 100dvh;
     overflow: hidden;
-    touch-action: pan-x pan-y;
     user-select: none;
   }
 
@@ -33,11 +32,13 @@
     opacity: 0;
     transition: opacity 0.25s ease, transform 0.25s ease;
     transform: translateX(100%);
+    pointer-events: none;
   }
 
   .slide.active {
     opacity: 1;
     transform: translateX(0);
+    pointer-events: none; /* tap zones handle interaction, not the slide */
   }
 
   .slide.prev {
@@ -52,15 +53,29 @@
     display: block;
     pointer-events: none;
     -webkit-user-drag: none;
-    transform-origin: center center;
   }
 
-  /* dragging state — disable transition for live tracking */
-  #gallery.dragging .slide {
-    transition: none;
+  /* ── Tap zones ──────────────────────────────────────────────────────────── */
+  .tap-zone {
+    position: fixed;
+    top: 0;
+    height: 100dvh;
+    width: 25%;
+    z-index: 20;
+    cursor: pointer;
+    /* Uncomment to visualise zones during development:   */
+    /* background: rgba(255,0,0,0.15);                    */
   }
 
-  /* Counter pill */
+  #tap-prev { left: 0; }
+  #tap-next { right: 0; }
+
+  /* Brief flash feedback on tap */
+  .tap-zone:active {
+    background: rgba(255,255,255,0.07);
+  }
+
+  /* ── Counter pill ───────────────────────────────────────────────────────── */
   #counter {
     position: fixed;
     top: 16px;
@@ -77,12 +92,9 @@
     pointer-events: none;
     z-index: 10;
     border: 1px solid rgba(255,255,255,0.15);
-    transition: opacity 0.3s;
   }
 
-  #counter.hidden { opacity: 0; }
-
-  /* Dot strip at bottom */
+  /* ── Dot strip ──────────────────────────────────────────────────────────── */
   #dots {
     position: fixed;
     bottom: 20px;
@@ -95,12 +107,9 @@
     max-width: 90vw;
     flex-wrap: nowrap;
     overflow: hidden;
-    transition: opacity 0.3s;
+    pointer-events: none;
   }
 
-  #dots.hidden { opacity: 0; }
-
-  /* Only shown when ≤ 20 images */
   .dot {
     width: 6px;
     height: 6px;
@@ -115,7 +124,7 @@
     transform: scale(1.35);
   }
 
-  /* Loading state */
+  /* ── Spinner ────────────────────────────────────────────────────────────── */
   .slide .loader {
     width: 32px;
     height: 32px;
@@ -124,6 +133,7 @@
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
     position: absolute;
+    pointer-events: none;
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -131,6 +141,8 @@
 </head>
 <body>
 
+<div id="tap-prev" class="tap-zone"></div>
+<div id="tap-next" class="tap-zone"></div>
 <div id="counter">1 / N</div>
 <div id="dots"></div>
 <div id="gallery"></div>
@@ -151,50 +163,12 @@ const dotsEl  = document.getElementById('dots');
 let current = 0;
 const total = IMAGES.length;
 
-// ── Zoom state ─────────────────────────────────────────────────────────────
-const MIN_SCALE = 1.0;
-const MAX_SCALE = 4.0;
-let scale = 1.0;  // current zoom level of active image
-let panX  = 0;    // pan offset X
-let panY  = 0;    // pan offset Y
-
-function isZoomed() { return scale > 1.02; }
-
-function applyImageTransform(img) {
-  img.style.transform = `scale(${scale}) translate(${panX / scale}px, ${panY / scale}px)`;
-}
-
-function resetZoom() {
-  scale = 1.0;
-  panX  = 0;
-  panY  = 0;
-  const img = slides[current].querySelector('img');
-  if (img) applyImageTransform(img);
-  counter.classList.remove('hidden');
-  dotsEl.classList.remove('hidden');
-}
-
-function clampPan(s) {
-  const img = slides[current].querySelector('img');
-  if (!img) return;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const iw = img.naturalWidth  || vw;
-  const ih = img.naturalHeight || vh;
-
-  // rendered size of image fitted into viewport at scale=1
-  const ratio = Math.min(vw / iw, vh / ih);
-  const fitW  = iw * ratio;
-  const fitH  = ih * ratio;
-
-  const maxPanX = Math.max(0, (fitW * s - vw) / 2);
-  const maxPanY = Math.max(0, (fitH * s - vh) / 2);
-
-  panX = Math.max(-maxPanX, Math.min(maxPanX, panX));
-  panY = Math.max(-maxPanY, Math.min(maxPanY, panY));
-}
+// ── How many images to preload ahead (and behind) ─────────────────────────
+const PRELOAD_AHEAD   = 3;
+const PRELOAD_BEHIND  = 1;
 
 // ── Build slides ───────────────────────────────────────────────────────────
+// Images are NOT loaded immediately — src is set on demand by preloadAround().
 const slides = IMAGES.map((src, i) => {
   const div = document.createElement('div');
   div.className = 'slide' + (i === 0 ? ' active' : '');
@@ -204,16 +178,31 @@ const slides = IMAGES.map((src, i) => {
   div.appendChild(loader);
 
   const img = document.createElement('img');
-  img.src = src;
-  img.onload  = () => loader.remove();
-  img.onerror = () => loader.remove();
+  img.dataset.src = src;   // store src for lazy loading
+  img.onload  = () => { if (loader.parentNode) loader.remove(); };
+  img.onerror = () => { if (loader.parentNode) loader.remove(); };
   div.appendChild(img);
 
   gallery.appendChild(div);
   return div;
 });
 
-// Build dots (only if ≤ 20 images)
+// ── Preloader ──────────────────────────────────────────────────────────────
+function preloadAround(index) {
+  // Build list of indices to have loaded: behind + current + ahead, all circular
+  const toLoad = new Set();
+  for (let d = -PRELOAD_BEHIND; d <= PRELOAD_AHEAD; d++) {
+    toLoad.add(((index + d) % total + total) % total);
+  }
+  toLoad.forEach(i => {
+    const img = slides[i].querySelector('img');
+    if (img && !img.src && img.dataset.src) {
+      img.src = img.dataset.src;  // trigger load
+    }
+  });
+}
+
+// ── Dot strip (only if ≤ 20 images) ───────────────────────────────────────
 if (total <= 20) {
   IMAGES.forEach((_, i) => {
     const d = document.createElement('div');
@@ -229,10 +218,9 @@ function updateUI() {
   );
 }
 
+// ── Navigation ─────────────────────────────────────────────────────────────
 function goTo(index, direction) {
-  if (index < 0 || index >= total || index === current) return;
-
-  resetZoom();
+  if (index === current) return;
 
   const outgoing = slides[current];
   const incoming = slides[index];
@@ -249,88 +237,110 @@ function goTo(index, direction) {
   setTimeout(() => {
     outgoing.classList.remove('prev');
     outgoing.style.transform = '';
-    const img = outgoing.querySelector('img');
-    if (img) img.style.transform = '';
   }, 280);
 
   current = index;
   updateUI();
+  preloadAround(current);
 }
 
-// ── Touch handling ─────────────────────────────────────────────────────────
-let touchStartX   = 0;
-let touchStartY   = 0;
-let dragX         = 0;
-let isDragging    = false;
-let isPinching    = false;
+function goNext() {
+  goTo(current + 1 < total ? current + 1 : 0,  1);
+}
 
-let pinchStartDist  = 0;
-let pinchStartScale = 1;
+function goPrev() {
+  goTo(current - 1 >= 0 ? current - 1 : total - 1, -1);
+}
 
-let panStartX  = 0;
-let panStartY  = 0;
-let panStartPX = 0;
-let panStartPY = 0;
+// ── Tap zone handlers ──────────────────────────────────────────────────────
+document.getElementById('tap-prev').addEventListener('click', goPrev);
+document.getElementById('tap-next').addEventListener('click', goNext);
 
-const SWIPE_THRESHOLD = 50;
-const DRAG_LOCK_ANGLE = 30;
+// ── Keyboard navigation (desktop) ─────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') goNext();
+  if (e.key === 'ArrowLeft')  goPrev();
+});
+
+// ── Initialise ─────────────────────────────────────────────────────────────
+preloadAround(0);
+updateUI();
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// PRESERVED — SWIPE + PINCH/ZOOM (not active — uncomment to restore)
+// To re-enable: uncomment this entire block, and change user-scalable=no
+// to user-scalable=yes in the viewport meta tag above.
+// ════════════════════════════════════════════════════════════════════════════
+/*
+
+const MIN_SCALE = 1.0;
+const MAX_SCALE = 4.0;
+let scale = 1.0;
+let panX  = 0;
+let panY  = 0;
+
+function isZoomed() { return scale > 1.02; }
+
+function applyImageTransform(img) {
+  img.style.transform = `scale(${scale}) translate(${panX / scale}px, ${panY / scale}px)`;
+}
+
+function resetZoom() {
+  scale = 1.0; panX = 0; panY = 0;
+  const img = slides[current].querySelector('img');
+  if (img) applyImageTransform(img);
+}
+
+function clampPan(s) {
+  const img = slides[current].querySelector('img');
+  if (!img) return;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const iw = img.naturalWidth || vw, ih = img.naturalHeight || vh;
+  const ratio = Math.min(vw / iw, vh / ih);
+  const maxPanX = Math.max(0, (iw * ratio * s - vw) / 2);
+  const maxPanY = Math.max(0, (ih * ratio * s - vh) / 2);
+  panX = Math.max(-maxPanX, Math.min(maxPanX, panX));
+  panY = Math.max(-maxPanY, Math.min(maxPanY, panY));
+}
+
+let touchStartX = 0, touchStartY = 0, dragX = 0;
+let isDragging = false, isPinching = false;
+let pinchStartDist = 0, pinchStartScale = 1;
+let panStartX = 0, panStartY = 0, panStartPX = 0, panStartPY = 0;
+const SWIPE_THRESHOLD = 50, DRAG_LOCK_ANGLE = 30;
 
 function touchDist(t1, t2) {
-  const dx = t1.clientX - t2.clientX;
-  const dy = t1.clientY - t2.clientY;
-  return Math.sqrt(dx * dx + dy * dy);
+  return Math.sqrt((t1.clientX-t2.clientX)**2 + (t1.clientY-t2.clientY)**2);
 }
 
 gallery.addEventListener('touchstart', e => {
   if (e.touches.length === 1) {
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    isDragging  = false;
-    dragX       = 0;
-    isPinching  = false;
-    panStartX   = e.touches[0].clientX;
-    panStartY   = e.touches[0].clientY;
-    panStartPX  = panX;
-    panStartPY  = panY;
-
+    touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
+    isDragging = false; dragX = 0; isPinching = false;
+    panStartX = e.touches[0].clientX; panStartY = e.touches[0].clientY;
+    panStartPX = panX; panStartPY = panY;
   } else if (e.touches.length === 2) {
-    isPinching      = true;
-    isDragging      = false;
-    pinchStartDist  = touchDist(e.touches[0], e.touches[1]);
-    pinchStartScale = scale;
-    panStartPX      = panX;
-    panStartPY      = panY;
+    isPinching = true; isDragging = false;
+    pinchStartDist = touchDist(e.touches[0], e.touches[1]);
+    pinchStartScale = scale; panStartPX = panX; panStartPY = panY;
   }
 }, { passive: true });
 
 gallery.addEventListener('touchmove', e => {
-
   if (e.touches.length === 2) {
-    // ── Pinch zoom ──────────────────────────────────────────────────────────
-    e.preventDefault();
-    isPinching = true;
-    isDragging = false;
-
-    const d = touchDist(e.touches[0], e.touches[1]);
-    scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, pinchStartScale * (d / pinchStartDist)));
+    e.preventDefault(); isPinching = true; isDragging = false;
+    scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE,
+      pinchStartScale * (touchDist(e.touches[0], e.touches[1]) / pinchStartDist)));
     clampPan(scale);
-
     const img = slides[current].querySelector('img');
     if (img) applyImageTransform(img);
-
-    if (isZoomed()) {
-      counter.classList.add('hidden');
-      dotsEl.classList.add('hidden');
-    }
     return;
   }
-
   if (e.touches.length === 1) {
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
-
     if (isZoomed()) {
-      // ── Pan while zoomed ────────────────────────────────────────────────
       e.preventDefault();
       panX = panStartPX + (e.touches[0].clientX - panStartX);
       panY = panStartPY + (e.touches[0].clientY - panStartY);
@@ -339,25 +349,20 @@ gallery.addEventListener('touchmove', e => {
       if (img) applyImageTransform(img);
       return;
     }
-
-    // ── Swipe between slides (only when not zoomed) ──────────────────────
     const angle = Math.abs(Math.atan2(dy, dx) * 180 / Math.PI);
     if (!isDragging && Math.abs(dx) < 8) return;
-
     if (angle < DRAG_LOCK_ANGLE || angle > (180 - DRAG_LOCK_ANGLE)) {
-      isDragging = true;
-      e.preventDefault();
-      dragX = dx;
+      isDragging = true; e.preventDefault(); dragX = dx;
       gallery.classList.add('dragging');
-
       slides[current].style.transform = `translateX(${dragX}px)`;
-
-      if (dragX < 0 && current < total - 1) {
-        slides[current + 1].style.transform = `translateX(calc(100% + ${dragX}px))`;
-        slides[current + 1].classList.add('active');
-      } else if (dragX > 0 && current > 0) {
-        slides[current - 1].style.transform = `translateX(calc(-100% + ${dragX}px))`;
-        slides[current - 1].classList.add('active');
+      if (dragX < 0) {
+        const next = current + 1 < total ? current + 1 : 0;
+        slides[next].style.transform = `translateX(calc(100% + ${dragX}px))`;
+        slides[next].classList.add('active');
+      } else if (dragX > 0) {
+        const prev = current - 1 >= 0 ? current - 1 : total - 1;
+        slides[prev].style.transform = `translateX(calc(-100% + ${dragX}px))`;
+        slides[prev].classList.add('active');
       }
     }
   }
@@ -365,64 +370,38 @@ gallery.addEventListener('touchmove', e => {
 
 gallery.addEventListener('touchend', e => {
   gallery.classList.remove('dragging');
-
   if (isPinching && e.touches.length === 0) {
-    isPinching = false;
-    if (scale < 1.05) resetZoom();
-    return;
+    isPinching = false; if (scale < 1.05) resetZoom(); return;
   }
-
   if (isDragging) {
-    slides.forEach((s, i) => {
-      if (i !== current) {
-        s.style.transform = '';
-        s.classList.remove('active');
-      }
-    });
+    slides.forEach((s, i) => { if (i !== current) { s.style.transform = ''; s.classList.remove('active'); } });
     slides[current].style.transform = '';
-
-    if (dragX < -SWIPE_THRESHOLD) {
-      goTo(current + 1,  1);
-    } else if (dragX > SWIPE_THRESHOLD) {
-      goTo(current - 1, -1);
-    }
+    if (dragX < -SWIPE_THRESHOLD) goNext();
+    else if (dragX > SWIPE_THRESHOLD) goPrev();
   }
-
-  isDragging = false;
-  dragX = 0;
+  isDragging = false; dragX = 0;
 });
 
-// ── Double-tap to zoom / reset ─────────────────────────────────────────────
 let lastTap = 0;
 gallery.addEventListener('touchend', e => {
   if (e.changedTouches.length !== 1) return;
   const now = Date.now();
   if (now - lastTap < 300) {
-    if (isZoomed()) {
-      resetZoom();
-    } else {
-      scale = 2.5;
-      panX  = 0;
-      panY  = 0;
+    if (isZoomed()) { resetZoom(); }
+    else {
+      scale = 2.5; panX = 0; panY = 0;
       const img = slides[current].querySelector('img');
       if (img) applyImageTransform(img);
-      counter.classList.add('hidden');
-      dotsEl.classList.add('hidden');
     }
     lastTap = 0;
-  } else {
-    lastTap = now;
-  }
+  } else { lastTap = now; }
 });
 
-// ── Keyboard navigation (desktop) ─────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight') goTo(current + 1,  1);
-  if (e.key === 'ArrowLeft')  goTo(current - 1, -1);
-  if (e.key === 'Escape')     resetZoom();
-});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') resetZoom(); });
 
-updateUI();
+*/
+// ════════════════════════════════════════════════════════════════════════════
+
 </script>
 </body>
 </html>
