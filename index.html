@@ -2,7 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+<!--
+  CACHE CONTROL — change 1 of 3
+  These three meta tags tell the browser never to cache this page.
+  "no-store" is the strongest — the browser won't save any part of the
+  response. "no-cache" and "must-revalidate" add belt-and-braces for
+  older browsers. Note: these tags only control caching of the HTML page
+  itself. Image caching is handled separately in the JS below.
+-->
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
+<!--
+  VIEWPORT — user-scalable=yes is required for pinch-zoom touch events
+  to reach our JavaScript. With user-scalable=no, Safari in particular
+  swallows pinch gestures before the page ever sees them.
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
 <title>Rally Gallery</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -13,6 +32,7 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     height: 100dvh;
     overflow: hidden;
+    touch-action: pan-x pan-y; /* allows pinch events through while blocking scroll */
     user-select: none;
   }
 
@@ -38,7 +58,7 @@
   .slide.active {
     opacity: 1;
     transform: translateX(0);
-    pointer-events: none; /* tap zones handle interaction, not the slide */
+    pointer-events: none;
   }
 
   .slide.prev {
@@ -53,6 +73,7 @@
     display: block;
     pointer-events: none;
     -webkit-user-drag: none;
+    transform-origin: center center;
   }
 
   /* ── Tap zones ──────────────────────────────────────────────────────────── */
@@ -63,16 +84,24 @@
     width: 25%;
     z-index: 20;
     cursor: pointer;
-    /* Uncomment to visualise zones during development:   */
-    /* background: rgba(255,0,0,0.15);                    */
+    /* Uncomment to visualise zones during development: */
+    /* background: rgba(255,0,0,0.15);                  */
   }
 
   #tap-prev { left: 0; }
   #tap-next { right: 0; }
 
-  /* Brief flash feedback on tap */
-  .tap-zone:active {
-    background: rgba(255,255,255,0.07);
+  /*
+    FLASH REMOVED — change 2 of 3
+    The previous version had a .tap-zone:active rule that showed a white
+    flash when tapped. That rule has simply been deleted — there is no
+    :active style here at all, so tapping produces no visible feedback.
+    We also add -webkit-tap-highlight-color: transparent on the zones to
+    suppress the blue/grey highlight that iOS/Android apply by default
+    to any tapped element.
+  */
+  .tap-zone {
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* ── Counter pill ───────────────────────────────────────────────────────── */
@@ -92,7 +121,10 @@
     pointer-events: none;
     z-index: 10;
     border: 1px solid rgba(255,255,255,0.15);
+    transition: opacity 0.3s;
   }
+
+  #counter.hidden { opacity: 0; }
 
   /* ── Dot strip ──────────────────────────────────────────────────────────── */
   #dots {
@@ -108,7 +140,10 @@
     flex-wrap: nowrap;
     overflow: hidden;
     pointer-events: none;
+    transition: opacity 0.3s;
   }
+
+  #dots.hidden { opacity: 0; }
 
   .dot {
     width: 6px;
@@ -150,9 +185,40 @@
 <script>
 // ── Image list injected by Python ──────────────────────────────────────────
 const IMAGES = [
-    "SS18_501.jpg",
-    "SS18_502.jpg",
-    "SS18_503.jpg"
+    "SS20_1.jpg",
+    "SS20_2.jpg",
+    "SS20_3.jpg",
+    "SS20_4.jpg",
+    "SS20_5.jpg",
+    "SS20_6.jpg",
+    "SS20_7.jpg",
+    "SS20_8.jpg",
+    "SS20_9.jpg",
+    "SS20_10.jpg",
+    "SS20_11.jpg",
+    "SS20_12.jpg",
+    "SS20_13.jpg",
+    "SS20_14.jpg",
+    "SS20_15.jpg",
+    "SS20_16.jpg",
+    "SS20_17.jpg",
+    "SS20_18.jpg",
+    "SS20_19.jpg",
+    "SS20_20.jpg",
+    "SS20_21.jpg",
+    "SS20_22.jpg",
+    "SS20_23.jpg",
+    "SS20_24.jpg",
+    "SS20_25.jpg",
+    "SS20_26.jpg",
+    "SS20_27.jpg",
+    "SS20_28.jpg",
+    "SS20_29.jpg",
+    "SS20_30.jpg",
+    "SS20_31.jpg",
+    "SS20_32.jpg",
+    "SS20_33.jpg",
+    "SS20_34.jpg"
 ];
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -163,12 +229,12 @@ const dotsEl  = document.getElementById('dots');
 let current = 0;
 const total = IMAGES.length;
 
-// ── How many images to preload ahead (and behind) ─────────────────────────
-const PRELOAD_AHEAD   = 3;
-const PRELOAD_BEHIND  = 1;
+// ── Preload window ─────────────────────────────────────────────────────────
+const PRELOAD_AHEAD  = 3;
+const PRELOAD_BEHIND = 1;
 
 // ── Build slides ───────────────────────────────────────────────────────────
-// Images are NOT loaded immediately — src is set on demand by preloadAround().
+// img.src is NOT set yet — preloadAround() sets it on demand.
 const slides = IMAGES.map((src, i) => {
   const div = document.createElement('div');
   div.className = 'slide' + (i === 0 ? ' active' : '');
@@ -178,7 +244,7 @@ const slides = IMAGES.map((src, i) => {
   div.appendChild(loader);
 
   const img = document.createElement('img');
-  img.dataset.src = src;   // store src for lazy loading
+  img.dataset.src = src;
   img.onload  = () => { if (loader.parentNode) loader.remove(); };
   img.onerror = () => { if (loader.parentNode) loader.remove(); };
   div.appendChild(img);
@@ -188,8 +254,20 @@ const slides = IMAGES.map((src, i) => {
 });
 
 // ── Preloader ──────────────────────────────────────────────────────────────
+/*
+  NO-CACHE FOR IMAGES — change 3 of 3
+  Browsers cache images aggressively. To force a fresh network fetch every
+  time (useful during field testing with varying signal), we append a
+  timestamp query string to each image URL: e.g. "SS18_501.jpg?t=1712345678901"
+  The server ignores the query string and returns the same image, but the
+  browser sees a different URL each time the page loads and fetches it fresh.
+  We generate the timestamp once at page-load time (cacheBust) so all images
+  share the same bust value within a single session — only a page reload
+  triggers new fetches.
+*/
+const cacheBust = Date.now();
+
 function preloadAround(index) {
-  // Build list of indices to have loaded: behind + current + ahead, all circular
   const toLoad = new Set();
   for (let d = -PRELOAD_BEHIND; d <= PRELOAD_AHEAD; d++) {
     toLoad.add(((index + d) % total + total) % total);
@@ -197,7 +275,7 @@ function preloadAround(index) {
   toLoad.forEach(i => {
     const img = slides[i].querySelector('img');
     if (img && !img.src && img.dataset.src) {
-      img.src = img.dataset.src;  // trigger load
+      img.src = `${img.dataset.src}?t=${cacheBust}`;
     }
   });
 }
@@ -222,6 +300,8 @@ function updateUI() {
 function goTo(index, direction) {
   if (index === current) return;
 
+  resetZoom();
+
   const outgoing = slides[current];
   const incoming = slides[index];
 
@@ -237,6 +317,8 @@ function goTo(index, direction) {
   setTimeout(() => {
     outgoing.classList.remove('prev');
     outgoing.style.transform = '';
+    const img = outgoing.querySelector('img');
+    if (img) img.style.transform = '';
   }, 280);
 
   current = index;
@@ -244,13 +326,8 @@ function goTo(index, direction) {
   preloadAround(current);
 }
 
-function goNext() {
-  goTo(current + 1 < total ? current + 1 : 0,  1);
-}
-
-function goPrev() {
-  goTo(current - 1 >= 0 ? current - 1 : total - 1, -1);
-}
+function goNext() { goTo(current + 1 < total ? current + 1 : 0,  1); }
+function goPrev() { goTo(current - 1 >= 0 ? current - 1 : total - 1, -1); }
 
 // ── Tap zone handlers ──────────────────────────────────────────────────────
 document.getElementById('tap-prev').addEventListener('click', goPrev);
@@ -260,20 +337,10 @@ document.getElementById('tap-next').addEventListener('click', goNext);
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') goNext();
   if (e.key === 'ArrowLeft')  goPrev();
+  if (e.key === 'Escape')     resetZoom();
 });
 
-// ── Initialise ─────────────────────────────────────────────────────────────
-preloadAround(0);
-updateUI();
-
-
-// ════════════════════════════════════════════════════════════════════════════
-// PRESERVED — SWIPE + PINCH/ZOOM (not active — uncomment to restore)
-// To re-enable: uncomment this entire block, and change user-scalable=no
-// to user-scalable=yes in the viewport meta tag above.
-// ════════════════════════════════════════════════════════════════════════════
-/*
-
+// ── Pinch / zoom ───────────────────────────────────────────────────────────
 const MIN_SCALE = 1.0;
 const MAX_SCALE = 4.0;
 let scale = 1.0;
@@ -290,6 +357,8 @@ function resetZoom() {
   scale = 1.0; panX = 0; panY = 0;
   const img = slides[current].querySelector('img');
   if (img) applyImageTransform(img);
+  counter.classList.remove('hidden');
+  dotsEl.classList.remove('hidden');
 }
 
 function clampPan(s) {
@@ -304,104 +373,88 @@ function clampPan(s) {
   panY = Math.max(-maxPanY, Math.min(maxPanY, panY));
 }
 
-let touchStartX = 0, touchStartY = 0, dragX = 0;
+let touchStartX = 0, touchStartY = 0;
 let isDragging = false, isPinching = false;
 let pinchStartDist = 0, pinchStartScale = 1;
 let panStartX = 0, panStartY = 0, panStartPX = 0, panStartPY = 0;
-const SWIPE_THRESHOLD = 50, DRAG_LOCK_ANGLE = 30;
 
 function touchDist(t1, t2) {
-  return Math.sqrt((t1.clientX-t2.clientX)**2 + (t1.clientY-t2.clientY)**2);
+  return Math.sqrt((t1.clientX - t2.clientX) ** 2 + (t1.clientY - t2.clientY) ** 2);
 }
 
 gallery.addEventListener('touchstart', e => {
   if (e.touches.length === 1) {
-    touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
-    isDragging = false; dragX = 0; isPinching = false;
-    panStartX = e.touches[0].clientX; panStartY = e.touches[0].clientY;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isDragging = false; isPinching = false;
+    panStartX = e.touches[0].clientX;
+    panStartY = e.touches[0].clientY;
     panStartPX = panX; panStartPY = panY;
   } else if (e.touches.length === 2) {
     isPinching = true; isDragging = false;
-    pinchStartDist = touchDist(e.touches[0], e.touches[1]);
-    pinchStartScale = scale; panStartPX = panX; panStartPY = panY;
+    pinchStartDist  = touchDist(e.touches[0], e.touches[1]);
+    pinchStartScale = scale;
+    panStartPX = panX; panStartPY = panY;
   }
 }, { passive: true });
 
 gallery.addEventListener('touchmove', e => {
   if (e.touches.length === 2) {
-    e.preventDefault(); isPinching = true; isDragging = false;
+    e.preventDefault();
+    isPinching = true; isDragging = false;
     scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE,
       pinchStartScale * (touchDist(e.touches[0], e.touches[1]) / pinchStartDist)));
     clampPan(scale);
     const img = slides[current].querySelector('img');
     if (img) applyImageTransform(img);
+    if (isZoomed()) {
+      counter.classList.add('hidden');
+      dotsEl.classList.add('hidden');
+    }
     return;
   }
-  if (e.touches.length === 1) {
-    const dx = e.touches[0].clientX - touchStartX;
-    const dy = e.touches[0].clientY - touchStartY;
-    if (isZoomed()) {
-      e.preventDefault();
-      panX = panStartPX + (e.touches[0].clientX - panStartX);
-      panY = panStartPY + (e.touches[0].clientY - panStartY);
-      clampPan(scale);
-      const img = slides[current].querySelector('img');
-      if (img) applyImageTransform(img);
-      return;
-    }
-    const angle = Math.abs(Math.atan2(dy, dx) * 180 / Math.PI);
-    if (!isDragging && Math.abs(dx) < 8) return;
-    if (angle < DRAG_LOCK_ANGLE || angle > (180 - DRAG_LOCK_ANGLE)) {
-      isDragging = true; e.preventDefault(); dragX = dx;
-      gallery.classList.add('dragging');
-      slides[current].style.transform = `translateX(${dragX}px)`;
-      if (dragX < 0) {
-        const next = current + 1 < total ? current + 1 : 0;
-        slides[next].style.transform = `translateX(calc(100% + ${dragX}px))`;
-        slides[next].classList.add('active');
-      } else if (dragX > 0) {
-        const prev = current - 1 >= 0 ? current - 1 : total - 1;
-        slides[prev].style.transform = `translateX(calc(-100% + ${dragX}px))`;
-        slides[prev].classList.add('active');
-      }
-    }
+  if (e.touches.length === 1 && isZoomed()) {
+    e.preventDefault();
+    panX = panStartPX + (e.touches[0].clientX - panStartX);
+    panY = panStartPY + (e.touches[0].clientY - panStartY);
+    clampPan(scale);
+    const img = slides[current].querySelector('img');
+    if (img) applyImageTransform(img);
   }
 }, { passive: false });
 
 gallery.addEventListener('touchend', e => {
-  gallery.classList.remove('dragging');
   if (isPinching && e.touches.length === 0) {
-    isPinching = false; if (scale < 1.05) resetZoom(); return;
+    isPinching = false;
+    if (scale < 1.05) resetZoom();
   }
-  if (isDragging) {
-    slides.forEach((s, i) => { if (i !== current) { s.style.transform = ''; s.classList.remove('active'); } });
-    slides[current].style.transform = '';
-    if (dragX < -SWIPE_THRESHOLD) goNext();
-    else if (dragX > SWIPE_THRESHOLD) goPrev();
-  }
-  isDragging = false; dragX = 0;
+  isDragging = false;
 });
 
+// Double-tap to zoom / reset
 let lastTap = 0;
 gallery.addEventListener('touchend', e => {
   if (e.changedTouches.length !== 1) return;
   const now = Date.now();
   if (now - lastTap < 300) {
-    if (isZoomed()) { resetZoom(); }
-    else {
+    if (isZoomed()) {
+      resetZoom();
+    } else {
       scale = 2.5; panX = 0; panY = 0;
       const img = slides[current].querySelector('img');
       if (img) applyImageTransform(img);
+      counter.classList.add('hidden');
+      dotsEl.classList.add('hidden');
     }
     lastTap = 0;
-  } else { lastTap = now; }
+  } else {
+    lastTap = now;
+  }
 });
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') resetZoom(); });
-
-*/
-// ════════════════════════════════════════════════════════════════════════════
-
+// ── Initialise ─────────────────────────────────────────────────────────────
+preloadAround(0);
+updateUI();
 </script>
 </body>
 </html>
