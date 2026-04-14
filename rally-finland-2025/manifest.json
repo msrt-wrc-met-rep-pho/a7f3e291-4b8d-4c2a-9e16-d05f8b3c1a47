@@ -1,9 +1,10 @@
 {
   "name": "Rally Finland 2025",
-  "short_name": "Rally Finland 2025",
+  "short_name": "Rally Finland",
+  "start_url": "/myrepo/rally-finland-2025/launch.html",
+  "scope": "/myrepo/rally-finland-2025/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
-  "orientation": "any",
-  "start_url": "./launch.html"
+  "orientation": "any"
 }
