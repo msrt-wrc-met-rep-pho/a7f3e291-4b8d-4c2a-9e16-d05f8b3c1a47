@@ -3,8 +3,8 @@
   "name": "Rally Finland 2025",
   "short_name": "Rally Finland",
 
-  "start_url": "./launch.html",
-  "scope": "./",
+  "start_url": "/a7f3e291-4b8d-4c2a-9e16-d05f8b3c1a47/rally-finland-2025/launch.html",
+  "scope": "/a7f3e291-4b8d-4c2a-9e16-d05f8b3c1a47/rally-finland-2025/",
 
   "display": "standalone",
   "background_color": "#000000",
