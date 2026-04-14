@@ -1,10 +1,27 @@
 {
+  "id": "/myrepo/rally-finland-2025/launch.html",
   "name": "Rally Finland 2025",
   "short_name": "Rally Finland",
-  "start_url": "/myrepo/rally-finland-2025/launch.html",
-  "scope": "/myrepo/rally-finland-2025/",
+
+  "start_url": "./launch.html",
+  "scope": "./",
+
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
-  "orientation": "any"
+
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }
