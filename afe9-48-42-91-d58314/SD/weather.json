@@ -1,5 +1,18 @@
 [
   {
+    "uploaded_at": "15:16:07",
+    "time": "1818",
+    "ground_shade": 22.7,
+    "ground_sun": 37.8,
+    "air_shade": 21.9,
+    "road": "Dry",
+    "weather": "Sunny with meatballs",
+    "cloud": "None",
+    "visibility": "Good",
+    "wind": "None",
+    "comments": "The cloud is growing from the SW"
+  },
+  {
     "uploaded_at": "13:32:13",
     "time": "1720",
     "ground_shade": 32.7,
