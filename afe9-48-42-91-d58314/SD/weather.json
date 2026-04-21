@@ -1,5 +1,19 @@
 [
   {
+    "uploaded_at": "20:27:10",
+    "time": "0800",
+    "box": "Box 9(4.76km) +400m",
+    "ground_shade": 16.5,
+    "ground_sun": 23.5,
+    "air_shade": 20.5,
+    "road": "Humid",
+    "weather": "Dry",
+    "cloud": "High White",
+    "visibility": "Good",
+    "wind": "Gusty light",
+    "comments": "Shadier in this position"
+  },
+  {
     "uploaded_at": "20:25:59",
     "time": "0800",
     "box": "Box 9(4.76km)",
