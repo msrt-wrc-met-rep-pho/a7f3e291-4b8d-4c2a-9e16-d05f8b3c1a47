@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- last updated: 21/04/2026 12:40:06 -->
+<!-- last updated: 21/04/2026 12:50:19 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -24,6 +24,55 @@
   --border:    #2a2a2a;
   --radius:    10px;
   --toolbar-h: 52px;
+  --graph-h:   180px;
+}
+
+/* ── Temperature graph ───────────────────────────────────────────────────── */
+#graph-panel {
+  position: fixed;
+  top: var(--toolbar-h);
+  left: 0;
+  right: 0;
+  height: var(--graph-h);
+  background: #0d0d0d;
+  border-bottom: 1px solid #222;
+  overflow: hidden;
+}
+
+#graph-panel svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#graph-legend {
+  position: absolute;
+  top: 7px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: none;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: #aaa;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 html, body {
@@ -111,7 +160,7 @@ html, body {
 /* ── Scrollable content ──────────────────────────────────────────────────── */
 #scroll {
   position: fixed;
-  top: var(--toolbar-h);
+  top: calc(var(--toolbar-h) + var(--graph-h));
   bottom: 0;
   left: 0;
   right: 0;
@@ -249,6 +298,11 @@ html, body {
   <div id="toolbar-count"></div>
 </div>
 
+<div id="graph-panel">
+  <svg id="graph-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div id="graph-legend"></div>
+</div>
+
 <div id="scroll">
   <div id="cards"></div>
 </div>
@@ -266,6 +320,19 @@ const RALLY_FOLDER    = "afe9-48-42-91-d58314";
 // Weather data injected by send_weather.py — array of report objects,
 // newest first (sorted at upload time).
 const WEATHER_DATA = [
+  {
+    "uploaded_at": "12:50:18",
+    "time": "1500",
+    "ground_shade": 22.7,
+    "ground_sun": 37.8,
+    "air_shade": 21.9,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "None",
+    "visibility": "Good",
+    "wind": "None",
+    "comments": "None"
+  },
   {
     "uploaded_at": "12:40:04",
     "time": "1100",
@@ -387,6 +454,176 @@ function buildCard(report) {
   return card;
 }
 
+
+// ── Temperature graph ─────────────────────────────────────────────────────
+// Colours for Ground Shade, Ground Sun, Air Shade
+const SERIES = [
+  { key: 'ground_shade', label: 'Gnd Shade', color: '#64b5f6' },  // blue
+  { key: 'ground_sun',   label: 'Gnd Sun',   color: '#ff7043' },  // orange-red
+  { key: 'air_shade',    label: 'Air Shade',  color: '#81c784' },  // green
+];
+
+// X axis: 05:00 to 21:00 fixed
+const X_START_MIN = 5 * 60;   // 300
+const X_END_MIN   = 21 * 60;  // 1260
+const X_RANGE_MIN = X_END_MIN - X_START_MIN;  // 960
+
+function _timeToMinutes(t) {
+  // t is a string like "1212" or "09:30" or "9:30"
+  if (!t) return null;
+  const clean = t.replace(':', '');
+  if (clean.length < 3) return null;
+  const h = parseInt(clean.slice(0, clean.length - 2), 10);
+  const m = parseInt(clean.slice(-2), 10);
+  if (isNaN(h) || isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+function drawGraph(data) {
+  const svg    = document.getElementById('graph-svg');
+  const legend = document.getElementById('graph-legend');
+  svg.innerHTML    = '';
+  legend.innerHTML = '';
+
+  if (!data || data.length === 0) return;
+
+  // Collect all temperature values for Y scaling
+  const allTemps = [];
+  data.forEach(r => {
+    SERIES.forEach(s => {
+      const v = parseFloat(r[s.key]);
+      if (!isNaN(v)) allTemps.push(v);
+    });
+  });
+
+  if (allTemps.length === 0) return;
+
+  const PAD_L = 32, PAD_R = 8, PAD_T = 14, PAD_B = 22;
+
+  // Auto-scale Y with padding
+  const rawMin = Math.min(...allTemps);
+  const rawMax = Math.max(...allTemps);
+  const range  = rawMax - rawMin || 10;
+  const pad    = range * 0.25;
+  const yMin   = rawMin - pad;
+  const yMax   = rawMax + pad;
+  const yRange = yMax - yMin;
+
+  // Use actual pixel dimensions via getBoundingClientRect
+  const panel = document.getElementById('graph-panel');
+  const W     = panel.clientWidth  || 360;
+  const H     = panel.clientHeight || 180;
+
+  const plotW = W - PAD_L - PAD_R;
+  const plotH = H - PAD_T - PAD_B;
+
+  function xPx(minutes) {
+    return PAD_L + ((minutes - X_START_MIN) / X_RANGE_MIN) * plotW;
+  }
+  function yPx(temp) {
+    return PAD_T + (1 - (temp - yMin) / yRange) * plotH;
+  }
+
+  function _el(tag, attrs) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+    return el;
+  }
+
+  // ── Grid lines (Y) ───────────────────────────────────────────────────────
+  // Pick ~4 round Y gridlines
+  const yStep = Math.ceil(yRange / 4 / 5) * 5 || 5;
+  const yFirst = Math.ceil(yMin / yStep) * yStep;
+  for (let y = yFirst; y <= yMax; y += yStep) {
+    const py = yPx(y);
+    svg.appendChild(_el('line', {
+      x1: PAD_L, y1: py, x2: W - PAD_R, y2: py,
+      stroke: '#222', 'stroke-width': '1'
+    }));
+    const txt = _el('text', {
+      x: PAD_L - 4, y: py + 4,
+      fill: '#555', 'font-size': '9',
+      'text-anchor': 'end', 'font-family': 'sans-serif'
+    });
+    txt.textContent = y + '°';
+    svg.appendChild(txt);
+  }
+
+  // ── X axis time labels ────────────────────────────────────────────────────
+  const xHours = [6, 8, 10, 12, 14, 16, 18, 20];
+  xHours.forEach(h => {
+    const px = xPx(h * 60);
+    if (px < PAD_L || px > W - PAD_R) return;
+    svg.appendChild(_el('line', {
+      x1: px, y1: PAD_T, x2: px, y2: H - PAD_B,
+      stroke: '#1e1e1e', 'stroke-width': '1'
+    }));
+    const txt = _el('text', {
+      x: px, y: H - PAD_B + 12,
+      fill: '#444', 'font-size': '9',
+      'text-anchor': 'middle', 'font-family': 'sans-serif'
+    });
+    txt.textContent = `${h}:00`;
+    svg.appendChild(txt);
+  });
+
+  // ── Plot each series ──────────────────────────────────────────────────────
+  SERIES.forEach(s => {
+    // Collect points sorted by time
+    const points = [];
+    data.forEach(r => {
+      const mins = _timeToMinutes(r.time);
+      const val  = parseFloat(r[s.key]);
+      if (mins !== null && !isNaN(val)) {
+        points.push({ mins, val });
+      }
+    });
+    points.sort((a, b) => a.mins - b.mins);
+
+    if (points.length === 0) return;
+
+    if (points.length === 1) {
+      // Single point — draw a filled dot
+      const p = points[0];
+      svg.appendChild(_el('circle', {
+        cx: xPx(p.mins), cy: yPx(p.val), r: '5',
+        fill: s.color
+      }));
+    } else {
+      // Polyline
+      const pts = points.map(p => `${xPx(p.mins)},${yPx(p.val)}`).join(' ');
+      svg.appendChild(_el('polyline', {
+        points: pts,
+        fill: 'none',
+        stroke: s.color,
+        'stroke-width': '3',
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round'
+      }));
+      // Dots at each data point
+      points.forEach(p => {
+        svg.appendChild(_el('circle', {
+          cx: xPx(p.mins), cy: yPx(p.val), r: '4',
+          fill: s.color
+        }));
+      });
+    }
+
+    // Legend entry
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    const dot = document.createElement('div');
+    dot.className = 'legend-dot';
+    dot.style.background = s.color;
+    const lbl = document.createElement('div');
+    lbl.className = 'legend-label';
+    lbl.textContent = s.label;
+    item.appendChild(dot);
+    item.appendChild(lbl);
+    legend.appendChild(item);
+  });
+}
+
 // ── Render all reports ────────────────────────────────────────────────────
 const cardsEl = document.getElementById('cards');
 let knownCount = 0;
@@ -403,6 +640,7 @@ function renderAll(data) {
     `${data.length} report${data.length > 1 ? 's' : ''}`;
   data.forEach(r => cardsEl.appendChild(buildCard(r)));
   knownCount = data.length;
+  drawGraph(data);
 }
 
 renderAll(WEATHER_DATA);
