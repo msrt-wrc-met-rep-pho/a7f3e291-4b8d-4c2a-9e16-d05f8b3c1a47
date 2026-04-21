@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<!-- last updated: 21/04/2026 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="./manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Rally Gallery</title>
+<style>
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:        #111;
+  --toolbar-h: 52px;
+  --accent:    #e8c840;
+  --grey:      #1e1e1e;
+  --grey-text: #444;
+  --border:    #2a2a2a;
+  --radius:    10px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+#toolbar {
+  height: var(--toolbar-h);
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  background: #000;
+  border-bottom: 1px solid #222;
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* ── Countdown bar ───────────────────────────────────────────────────────── */
+#countdown-bar-wrap {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 3px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 0 0 2px 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#countdown-bar {
+  height: 100%;
+  width: 100%;
+  background: var(--accent);
+  border-radius: 0 0 2px 2px;
+  transform-origin: left center;
+  animation: countdown 60s linear forwards;
+}
+
+@keyframes countdown {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+#rally-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+
+/* ── Scrollable stage list ───────────────────────────────────────────────── */
+#scroll {
+  position: fixed;
+  top: var(--toolbar-h);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 12px;
+}
+
+/* ── Stage row ───────────────────────────────────────────────────────────── */
+.stage-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+/* Stage label — fixed width so icons align */
+.stage-label {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #666;
+  width: 42px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.stage-label.live {
+  color: var(--accent);
+}
+
+/* ── Icon cards ──────────────────────────────────────────────────────────── */
+.icon-card {
+  flex: 1;
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 6px;
+  gap: 5px;
+  transition: transform 0.12s;
+  min-height: 64px;
+  position: relative;
+}
+
+/* Live — yellow, tappable */
+.icon-card.live {
+  background: #1a1800;
+  border: 1.5px solid var(--accent);
+  cursor: pointer;
+}
+
+.icon-card.live:active {
+  transform: scale(0.94);
+}
+
+/* Empty — grey, non-tappable */
+.icon-card.empty {
+  background: var(--grey);
+  border: 1.5px solid #2a2a2a;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Icon SVG */
+.icon-card svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.icon-card.live  svg { stroke: var(--accent); }
+.icon-card.empty svg { stroke: #444; }
+
+/* Sub-label below icon */
+.icon-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.icon-card.live  .icon-label { color: rgba(232,200,64,0.7); }
+.icon-card.empty .icon-label { color: #3a3a3a; }
+
+/* ── Loading / error ─────────────────────────────────────────────────────── */
+#status {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #555;
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <div id="countdown-bar-wrap">
+    <div id="countdown-bar"></div>
+  </div>
+  <div id="rally-name">Loading...</div>
+</div>
+
+<div id="scroll">
+  <div id="stage-list"></div>
+</div>
+
+<div id="status">Loading stages...</div>
+
+<script>
+
+// Placeholders replaced by create_rally.py at upload time
+const GITHUB_USERNAME = "msrt-wrc-met-rep-pho";
+const GITHUB_REPO     = "a7f3e291-4b8d-4c2a-9e16-d05f8b3c1a47";
+const RALLY_FOLDER    = "afe9-48-42-91-d58314";
+
+// ── SVG icons ─────────────────────────────────────────────────────────────
+function _photoIcon() {
+  // Camera icon
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke-width", "2");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.innerHTML = `
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8
+             a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>`;
+  return svg;
+}
+
+function _weatherIcon() {
+  // Cloud + sun icon
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke-width", "2");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.innerHTML = `
+    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/>`;
+  return svg;
+}
+
+// ── Build one stage row ────────────────────────────────────────────────────
+function buildRow(key, info) {
+  const hasPhotos  = info.count  > 0;
+  const hasWeather = info.weather_count > 0;
+  const isAnyLive  = hasPhotos || hasWeather;
+
+  const row = document.createElement('div');
+  row.className = 'stage-row';
+
+  // Stage label
+  const label = document.createElement('div');
+  label.className = 'stage-label' + (isAnyLive ? ' live' : '');
+  label.textContent = key;
+  row.appendChild(label);
+
+  // ── Photo icon card ──────────────────────────────────────────────────────
+  const photoCard = document.createElement('div');
+  photoCard.className = 'icon-card ' + (hasPhotos ? 'live' : 'empty');
+  photoCard.appendChild(_photoIcon());
+
+  const photoLabel = document.createElement('div');
+  photoLabel.className = 'icon-label';
+  photoLabel.textContent = hasPhotos ? `${info.count} images` : 'no images';
+  photoCard.appendChild(photoLabel);
+
+  if (hasPhotos) {
+    photoCard.addEventListener('click', () => {
+      window.location.href = `${key}/index.html`;
+    });
+  }
+  row.appendChild(photoCard);
+
+  // ── Weather icon card ────────────────────────────────────────────────────
+  const wxCard = document.createElement('div');
+  wxCard.className = 'icon-card ' + (hasWeather ? 'live' : 'empty');
+  wxCard.appendChild(_weatherIcon());
+
+  const wxLabel = document.createElement('div');
+  wxLabel.className = 'icon-label';
+  wxLabel.textContent = hasWeather
+    ? `${info.weather_count} report${info.weather_count > 1 ? 's' : ''}`
+    : 'no weather';
+  wxCard.appendChild(wxLabel);
+
+  if (hasWeather) {
+    wxCard.addEventListener('click', () => {
+      window.location.href = `${key}/weather.html`;
+    });
+  }
+  row.appendChild(wxCard);
+
+  return row;
+}
+
+// ── Load stages.json via GitHub API ───────────────────────────────────────
+const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${RALLY_FOLDER}/stages.json`;
+
+fetch(apiUrl, { headers: { 'Accept': 'application/vnd.github.v3+json' } })
+  .then(r => {
+    const remaining = r.headers.get('X-RateLimit-Remaining');
+    if (r.status === 403 && remaining === '0') {
+      const reset = r.headers.get('X-RateLimit-Reset');
+      const resetTime = reset
+        ? new Date(parseInt(reset) * 1000).toLocaleTimeString()
+        : 'shortly';
+      throw new Error(`GitHub API rate limit reached. Resets at ${resetTime}.`);
+    }
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  })
+  .then(apiData => JSON.parse(atob(apiData.content.replace(/\n/g, ''))))
+  .then(data => {
+    document.getElementById('status').style.display = 'none';
+    renderStages(data);
+    resetCountdownBar();
+  })
+  .catch(err => {
+    document.getElementById('status').textContent =
+      `Could not load stage data.\n${err.message}`;
+    resetCountdownBar();
+  });
+
+// ── Countdown bar ─────────────────────────────────────────────────────────
+function resetCountdownBar() {
+  const bar = document.getElementById('countdown-bar');
+  bar.style.animation = 'none';
+  bar.offsetHeight;
+  bar.style.animation = '';
+}
+
+// ── Render stage list from data ───────────────────────────────────────────
+function renderStages(data) {
+  document.getElementById('rally-name').textContent = data.rally;
+  document.title = data.rally;
+
+  const list = document.getElementById('stage-list');
+  list.innerHTML = '';
+
+  const stageKeys = Object.keys(data.stages).sort((a, b) => {
+    if (a === 'SD') return -1;
+    if (b === 'SD') return  1;
+    return parseInt(a.replace('SS', '')) - parseInt(b.replace('SS', ''));
+  });
+
+  stageKeys.forEach(key => {
+    list.appendChild(buildRow(key, data.stages[key]));
+  });
+}
+
+// ── Periodic refresh ──────────────────────────────────────────────────────
+async function checkForUpdates() {
+  if (document.hidden) { resetCountdownBar(); return; }
+
+  try {
+    const r = await fetch(apiUrl, {
+      headers: { 'Accept': 'application/vnd.github.v3+json' },
+      cache: 'no-store'
+    });
+
+    if (r.status === 403) {
+      const remaining = r.headers.get('X-RateLimit-Remaining');
+      if (remaining === '0') {
+        resetCountdownBar();
+        return;
+      }
+    }
+
+    if (!r.ok) { resetCountdownBar(); return; }
+
+    const apiData = await r.json();
+    const data    = JSON.parse(atob(apiData.content.replace(/\n/g, '')));
+    renderStages(data);
+
+  } catch (e) {
+    // Silent fail
+  }
+
+  resetCountdownBar();
+}
+
+resetCountdownBar();
+setInterval(checkForUpdates, 60000);
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) checkForUpdates();
+});
+
+</script>
+</body>
+</html>
