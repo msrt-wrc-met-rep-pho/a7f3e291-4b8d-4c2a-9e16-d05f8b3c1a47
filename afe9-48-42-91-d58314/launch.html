@@ -45,6 +45,35 @@ html, body {
   background: #000;
   border-bottom: 1px solid #222;
   flex-shrink: 0;
+  position: relative;
+}
+
+/* ── Countdown bar ───────────────────────────────────────────────────────── */
+#countdown-bar-wrap {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 3px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 0 0 2px 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#countdown-bar {
+  height: 100%;
+  width: 100%;
+  background: var(--accent);
+  border-radius: 0 0 2px 2px;
+  transform-origin: left center;
+  animation: countdown 60s linear forwards;
+}
+
+@keyframes countdown {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
 }
 
 #rally-name {
@@ -161,6 +190,9 @@ html, body {
 <body>
 
 <div id="toolbar">
+  <div id="countdown-bar-wrap">
+    <div id="countdown-bar"></div>
+  </div>
   <div id="rally-name">Loading...</div>
 </div>
 
@@ -279,25 +311,79 @@ fetch(apiUrl, { headers: { 'Accept': 'application/vnd.github.v3+json' } })
   .then(apiData => JSON.parse(atob(apiData.content.replace(/\n/g, ''))))
   .then(data => {
     document.getElementById('status').style.display = 'none';
-    document.getElementById('rally-name').textContent = data.rally;
-    document.title = data.rally;
-
-    const list = document.getElementById('stage-list');
-
-    const stageKeys = Object.keys(data.stages).sort((a, b) => {
-      if (a === 'SD') return -1;
-      if (b === 'SD') return  1;
-      return parseInt(a.replace('SS', '')) - parseInt(b.replace('SS', ''));
-    });
-
-    stageKeys.forEach(key => {
-      list.appendChild(buildRow(key, data.stages[key]));
-    });
+    renderStages(data);
+    resetCountdownBar();
   })
   .catch(err => {
     document.getElementById('status').textContent =
       `Could not load stage data.\n${err.message}`;
+    resetCountdownBar();
   });
+
+// ── Countdown bar ─────────────────────────────────────────────────────────
+function resetCountdownBar() {
+  const bar = document.getElementById('countdown-bar');
+  bar.style.animation = 'none';
+  bar.offsetHeight;
+  bar.style.animation = '';
+}
+
+// ── Render stage list from data ───────────────────────────────────────────
+function renderStages(data) {
+  document.getElementById('rally-name').textContent = data.rally;
+  document.title = data.rally;
+
+  const list = document.getElementById('stage-list');
+  list.innerHTML = '';
+
+  const stageKeys = Object.keys(data.stages).sort((a, b) => {
+    if (a === 'SD') return -1;
+    if (b === 'SD') return  1;
+    return parseInt(a.replace('SS', '')) - parseInt(b.replace('SS', ''));
+  });
+
+  stageKeys.forEach(key => {
+    list.appendChild(buildRow(key, data.stages[key]));
+  });
+}
+
+// ── Periodic refresh ──────────────────────────────────────────────────────
+async function checkForUpdates() {
+  if (document.hidden) { resetCountdownBar(); return; }
+
+  try {
+    const r = await fetch(apiUrl, {
+      headers: { 'Accept': 'application/vnd.github.v3+json' },
+      cache: 'no-store'
+    });
+
+    if (r.status === 403) {
+      const remaining = r.headers.get('X-RateLimit-Remaining');
+      if (remaining === '0') {
+        resetCountdownBar();
+        return;
+      }
+    }
+
+    if (!r.ok) { resetCountdownBar(); return; }
+
+    const apiData = await r.json();
+    const data    = JSON.parse(atob(apiData.content.replace(/\n/g, '')));
+    renderStages(data);
+
+  } catch (e) {
+    // Silent fail
+  }
+
+  resetCountdownBar();
+}
+
+resetCountdownBar();
+setInterval(checkForUpdates, 60000);
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) checkForUpdates();
+});
 
 </script>
 </body>
