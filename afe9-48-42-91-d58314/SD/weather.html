@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- last updated: 21/04/2026 15:46:49 -->
+<!-- last updated: 21/04/2026 17:20:44 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -197,14 +197,6 @@ html, body {
 .weather-card-uploaded {
   font-size: 11px;
   color: var(--subtext);
-}
-
-.weather-card-box {
-  font-size: 12px;
-  color: #aaa;
-  padding: 6px 14px;
-  border-bottom: 1px solid var(--border);
-  background: #161616;
 }
 
 /* ── Data rows ───────────────────────────────────────────────────────────── */
@@ -439,6 +431,20 @@ const WEATHER_DATA = [
     "visibility": "Good",
     "wind": "None",
     "comments": "None"
+  },
+  {
+    "uploaded_at": "17:20:42",
+    "time": "0600",
+    "box": "Box 16(10.95km)",
+    "ground_shade": 10.0,
+    "ground_sun": 10.0,
+    "air_shade": 10.0,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "None",
+    "visibility": "Good",
+    "wind": "None",
+    "comments": "None"
   }
 ];
 
@@ -464,21 +470,14 @@ function buildCard(report) {
 
   const timeEl = document.createElement('div');
   timeEl.className = 'weather-card-time';
-  timeEl.textContent = `Report time: ${report.time || '—'}`;
+  const boxPart = report.box ? ` - ${report.box}` : '';
+  timeEl.textContent = `${report.time || '—'}${boxPart}`;
   header.appendChild(timeEl);
 
   const uploadedEl = document.createElement('div');
   uploadedEl.className = 'weather-card-uploaded';
   uploadedEl.textContent = `Uploaded ${report.uploaded_at || ''}`;
   header.appendChild(uploadedEl);
-  // Box info — top line of card, above header
-  if (report.box) {
-    const boxEl = document.createElement('div');
-    boxEl.className = 'weather-card-box';
-    boxEl.textContent = report.box;
-    card.appendChild(boxEl);
-  }
-
   card.appendChild(header);
 
   // Data rows
