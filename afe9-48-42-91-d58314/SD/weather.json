@@ -118,6 +118,20 @@
     "comments": "None"
   },
   {
+    "uploaded_at": "17:29:21",
+    "time": "0730",
+    "box": "Box 16(10.95km) +250m",
+    "ground_shade": 20.0,
+    "ground_sun": 25.0,
+    "air_shade": 22.5,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "None",
+    "visibility": "Good",
+    "wind": "None",
+    "comments": "None"
+  },
+  {
     "uploaded_at": "17:20:42",
     "time": "0600",
     "box": "Box 16(10.95km)",
