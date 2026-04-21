@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- last updated: 21/04/2026 12:58:29 -->
+<!-- last updated: 21/04/2026 13:32:15 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -245,8 +245,10 @@ html, body {
 .weather-value.cond-wet    { color: #64b5f6; }
 .weather-value.cond-none   { color: var(--subtext); }
 
-/* Temperature values — shown with degree symbol */
-.weather-value.temp { color: #ffb347; }
+/* Temperature values — matched to graph line colours */
+.weather-value.temp-ground-shade { color: #64b5f6; }  /* blue */
+.weather-value.temp-ground-sun   { color: #e8c840; }  /* yellow */
+.weather-value.temp-air-shade    { color: #81c784; }  /* green */
 
 /* ── Toast ───────────────────────────────────────────────────────────────── */
 #toast {
@@ -320,6 +322,19 @@ const RALLY_FOLDER    = "afe9-48-42-91-d58314";
 // Weather data injected by send_weather.py — array of report objects,
 // newest first (sorted at upload time).
 const WEATHER_DATA = [
+  {
+    "uploaded_at": "13:32:13",
+    "time": "1720",
+    "ground_shade": 32.7,
+    "ground_sun": 47.8,
+    "air_shade": 31.9,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "None",
+    "visibility": "Good",
+    "wind": "None",
+    "comments": "None"
+  },
   {
     "uploaded_at": "12:58:27",
     "time": "1700",
@@ -422,31 +437,31 @@ function buildCard(report) {
 
   const timeEl = document.createElement('div');
   timeEl.className = 'weather-card-time';
-  timeEl.textContent = `Stage time: ${report.time || '—'}`;
+  timeEl.textContent = `Report time: ${report.time || '—'}`;
   header.appendChild(timeEl);
 
   const uploadedEl = document.createElement('div');
   uploadedEl.className = 'weather-card-uploaded';
   uploadedEl.textContent = `Uploaded ${report.uploaded_at || ''}`;
   header.appendChild(uploadedEl);
-  card.appendChild(header);
-
-  // Box info
+  // Box info — top line of card, above header
   if (report.box) {
     const boxEl = document.createElement('div');
     boxEl.className = 'weather-card-box';
-    boxEl.textContent = `Box: ${report.box}`;
+    boxEl.textContent = report.box;
     card.appendChild(boxEl);
   }
+
+  card.appendChild(header);
 
   // Data rows
   const rows = document.createElement('div');
   rows.className = 'weather-rows';
 
   const fields = [
-    { label: 'Ground Shade',  key: 'ground_shade',  unit: ' °C', cls: 'temp' },
-    { label: 'Ground Sun',    key: 'ground_sun',    unit: ' °C', cls: 'temp' },
-    { label: 'Air Shade',     key: 'air_shade',     unit: ' °C', cls: 'temp' },
+    { label: 'Ground Shade',  key: 'ground_shade',  unit: ' °C', cls: 'temp-ground-shade' },
+    { label: 'Ground Sun',    key: 'ground_sun',    unit: ' °C', cls: 'temp-ground-sun'   },
+    { label: 'Air Shade',     key: 'air_shade',     unit: ' °C', cls: 'temp-air-shade'    },
     { label: 'Road',          key: 'road',          unit: '',    cls: null   },
     { label: 'Weather',       key: 'weather',       unit: '',    cls: null   },
     { label: 'Cloud',         key: 'cloud',         unit: '',    cls: null   },
@@ -485,7 +500,7 @@ function buildCard(report) {
 // Colours for Ground Shade, Ground Sun, Air Shade
 const SERIES = [
   { key: 'ground_shade', label: 'Gnd Shade', color: '#64b5f6' },  // blue
-  { key: 'ground_sun',   label: 'Gnd Sun',   color: '#ff7043' },  // orange-red
+  { key: 'ground_sun',   label: 'Gnd Sun',   color: '#e8c840' },  // yellow
   { key: 'air_shade',    label: 'Air Shade',  color: '#81c784' },  // green
 ];
 
