@@ -1,5 +1,19 @@
 [
   {
+    "uploaded_at": "20:25:59",
+    "time": "0800",
+    "box": "Box 9(4.76km)",
+    "ground_shade": 12.5,
+    "ground_sun": 14.5,
+    "air_shade": 18.5,
+    "road": "Humid",
+    "weather": "Dry",
+    "cloud": "None",
+    "visibility": "Good",
+    "wind": "Gusty light",
+    "comments": "Clouds approaching from SSW"
+  },
+  {
     "uploaded_at": "20:24:56",
     "time": "0600",
     "box": "Box 9(4.76km)",
