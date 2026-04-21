@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<!-- last updated: 21/04/2026 12:34:53 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="../manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SD Weather</title>
+<style>
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:        #111;
+  --card-bg:   #1a1a1a;
+  --accent:    #e8c840;
+  --subtext:   #888;
+  --border:    #2a2a2a;
+  --radius:    10px;
+  --toolbar-h: 52px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+#toolbar {
+  height: var(--toolbar-h);
+  min-height: var(--toolbar-h);
+  display: flex;
+  align-items: center;
+  padding: 0 8px 0 4px;
+  background: #000;
+  border-bottom: 1px solid #222;
+  gap: 8px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+#btn-launch {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: none; background: transparent;
+  color: #fff; cursor: pointer; flex-shrink: 0;
+}
+#btn-launch:active { background: rgba(255,255,255,0.12); }
+#btn-launch svg {
+  width: 22px; height: 22px;
+  fill: none; stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+#toolbar-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  flex: 1;
+}
+
+#toolbar-count {
+  font-size: 12px;
+  color: var(--subtext);
+  padding-right: 8px;
+}
+
+/* ── Countdown bar ───────────────────────────────────────────────────────── */
+#countdown-bar-wrap {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 3px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 0 0 2px 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#countdown-bar {
+  height: 100%;
+  width: 100%;
+  background: var(--accent);
+  border-radius: 0 0 2px 2px;
+  transform-origin: left center;
+  animation: countdown 60s linear forwards;
+}
+
+@keyframes countdown {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/* ── Scrollable content ──────────────────────────────────────────────────── */
+#scroll {
+  position: fixed;
+  top: var(--toolbar-h);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px;
+}
+
+/* ── Weather card ────────────────────────────────────────────────────────── */
+.weather-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.weather-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #141414;
+}
+
+.weather-card-time {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+
+.weather-card-uploaded {
+  font-size: 11px;
+  color: var(--subtext);
+}
+
+.weather-card-box {
+  font-size: 12px;
+  color: #aaa;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #161616;
+}
+
+/* ── Data rows ───────────────────────────────────────────────────────────── */
+.weather-rows {
+  padding: 8px 0;
+}
+
+.weather-row {
+  display: flex;
+  align-items: center;
+  padding: 5px 14px;
+  gap: 8px;
+}
+
+.weather-row:nth-child(even) {
+  background: rgba(255,255,255,0.02);
+}
+
+.weather-label {
+  font-size: 11px;
+  color: var(--subtext);
+  width: 110px;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.weather-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  flex: 1;
+}
+
+/* Colour-coded road/weather condition */
+.weather-value.cond-dry    { color: #6fcf6f; }
+.weather-value.cond-damp   { color: #e8c840; }
+.weather-value.cond-wet    { color: #64b5f6; }
+.weather-value.cond-none   { color: var(--subtext); }
+
+/* Temperature values — shown with degree symbol */
+.weather-value.temp { color: #ffb347; }
+
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(232,200,64,0.95);
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+  white-space: nowrap;
+  z-index: 50;
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+#empty {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--subtext);
+  font-size: 14px;
+  text-align: center;
+}
+
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <div id="countdown-bar-wrap">
+    <div id="countdown-bar"></div>
+  </div>
+  <button id="btn-launch" aria-label="Back to rally">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <div id="toolbar-title">SD — Weather</div>
+  <div id="toolbar-count"></div>
+</div>
+
+<div id="scroll">
+  <div id="cards"></div>
+</div>
+
+<div id="empty">No weather reports yet.</div>
+<div id="toast"></div>
+
+<script>
+
+const STAGE        = "SD";
+const GITHUB_USERNAME = "msrt-wrc-met-rep-pho";
+const GITHUB_REPO     = "a7f3e291-4b8d-4c2a-9e16-d05f8b3c1a47";
+const RALLY_FOLDER    = "afe9-48-42-91-d58314";
+
+// Weather data injected by send_weather.py — array of report objects,
+// newest first (sorted at upload time).
+const WEATHER_DATA = [
+  {
+    "uploaded_at": "12:34:51",
+    "time": "1212",
+    "ground_shade": 22.7,
+    "ground_sun": 37.8,
+    "air_shade": 21.9,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "None",
+    "visibility": "Good",
+    "wind": "None",
+    "comments": "None"
+  }
+];
+
+// ── Condition colour helper ───────────────────────────────────────────────
+function condClass(val) {
+  if (!val) return '';
+  const v = val.toLowerCase();
+  if (v === 'none' || v === 'good') return 'cond-none';
+  if (v.includes('dry'))  return 'cond-dry';
+  if (v.includes('damp')) return 'cond-damp';
+  if (v.includes('wet'))  return 'cond-wet';
+  return '';
+}
+
+// ── Build a single weather card ───────────────────────────────────────────
+function buildCard(report) {
+  const card = document.createElement('div');
+  card.className = 'weather-card';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'weather-card-header';
+
+  const timeEl = document.createElement('div');
+  timeEl.className = 'weather-card-time';
+  timeEl.textContent = `Stage time: ${report.time || '—'}`;
+  header.appendChild(timeEl);
+
+  const uploadedEl = document.createElement('div');
+  uploadedEl.className = 'weather-card-uploaded';
+  uploadedEl.textContent = `Uploaded ${report.uploaded_at || ''}`;
+  header.appendChild(uploadedEl);
+  card.appendChild(header);
+
+  // Box info
+  if (report.box) {
+    const boxEl = document.createElement('div');
+    boxEl.className = 'weather-card-box';
+    boxEl.textContent = `Box: ${report.box}`;
+    card.appendChild(boxEl);
+  }
+
+  // Data rows
+  const rows = document.createElement('div');
+  rows.className = 'weather-rows';
+
+  const fields = [
+    { label: 'Ground Shade',  key: 'ground_shade',  unit: ' °C', cls: 'temp' },
+    { label: 'Ground Sun',    key: 'ground_sun',    unit: ' °C', cls: 'temp' },
+    { label: 'Air Shade',     key: 'air_shade',     unit: ' °C', cls: 'temp' },
+    { label: 'Road',          key: 'road',          unit: '',    cls: null   },
+    { label: 'Weather',       key: 'weather',       unit: '',    cls: null   },
+    { label: 'Cloud',         key: 'cloud',         unit: '',    cls: null   },
+    { label: 'Visibility',    key: 'visibility',    unit: '',    cls: null   },
+    { label: 'Wind',          key: 'wind',          unit: '',    cls: null   },
+    { label: 'Comments',      key: 'comments',      unit: '',    cls: null   },
+  ];
+
+  fields.forEach(f => {
+    const val = report[f.key];
+    if (val === undefined || val === null) return;
+
+    const row = document.createElement('div');
+    row.className = 'weather-row';
+
+    const label = document.createElement('div');
+    label.className = 'weather-label';
+    label.textContent = f.label;
+    row.appendChild(label);
+
+    const value = document.createElement('div');
+    const extraCls = f.cls || condClass(String(val));
+    value.className = 'weather-value' + (extraCls ? ' ' + extraCls : '');
+    value.textContent = val + f.unit;
+    row.appendChild(value);
+
+    rows.appendChild(row);
+  });
+
+  card.appendChild(rows);
+  return card;
+}
+
+// ── Render all reports ────────────────────────────────────────────────────
+const cardsEl = document.getElementById('cards');
+let knownCount = 0;
+
+function renderAll(data) {
+  cardsEl.innerHTML = '';
+  if (!data || data.length === 0) {
+    document.getElementById('empty').style.display = 'block';
+    document.getElementById('toolbar-count').textContent = '';
+    return;
+  }
+  document.getElementById('empty').style.display = 'none';
+  document.getElementById('toolbar-count').textContent =
+    `${data.length} report${data.length > 1 ? 's' : ''}`;
+  data.forEach(r => cardsEl.appendChild(buildCard(r)));
+  knownCount = data.length;
+}
+
+renderAll(WEATHER_DATA);
+
+// ── Back to launch ────────────────────────────────────────────────────────
+document.getElementById('btn-launch').addEventListener('click', () => {
+  window.location.href = '../launch.html';
+});
+
+// ── Toast helper ──────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Countdown bar ─────────────────────────────────────────────────────────
+function resetCountdownBar() {
+  const bar = document.getElementById('countdown-bar');
+  bar.style.animation = 'none';
+  bar.offsetHeight;
+  bar.style.animation = '';
+}
+
+// ── Live refresh — poll weather.json via GitHub API every 60s ─────────────
+const _apiBase = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${RALLY_FOLDER}/${STAGE}/weather.json`;
+
+async function checkForUpdates() {
+  if (document.hidden) { resetCountdownBar(); return; }
+
+  try {
+    const r = await fetch(_apiBase, {
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
+    });
+
+    if (r.status === 403) {
+      const remaining = r.headers.get('X-RateLimit-Remaining');
+      if (remaining === '0') {
+        const reset = r.headers.get('X-RateLimit-Reset');
+        const resetTime = reset
+          ? new Date(parseInt(reset) * 1000).toLocaleTimeString()
+          : 'shortly';
+        showToast(`Rate limit reached — resets ${resetTime}`);
+        resetCountdownBar();
+        return;
+      }
+    }
+
+    if (!r.ok) { resetCountdownBar(); return; }
+
+    const apiData = await r.json();
+    const data    = JSON.parse(atob(apiData.content.replace(/\n/g, '')));
+
+    if (data.length > knownCount) {
+      const added = data.length - knownCount;
+      renderAll(data);
+      showToast(`+${added} new report${added > 1 ? 's' : ''}`);
+    }
+
+  } catch (e) {
+    // Silent fail
+  }
+
+  resetCountdownBar();
+}
+
+resetCountdownBar();
+setInterval(checkForUpdates, 60000);
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) checkForUpdates();
+});
+
+</script>
+</body>
+</html>
