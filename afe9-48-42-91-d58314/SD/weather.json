@@ -1,5 +1,19 @@
 [
   {
+    "uploaded_at": "22:09:31",
+    "time": "0930",
+    "box": "Box 10(5.93km)",
+    "ground_shade": 14.0,
+    "ground_sun": 16.0,
+    "air_shade": 18.0,
+    "road": "Dry",
+    "weather": "Cloudy with meatballs",
+    "cloud": "High white",
+    "visibility": "Good",
+    "wind": "Light Gusty",
+    "comments": "Clouds approaching from S now"
+  },
+  {
     "uploaded_at": "22:06:44",
     "time": "0800",
     "box": "Box 10(5.93km)",
