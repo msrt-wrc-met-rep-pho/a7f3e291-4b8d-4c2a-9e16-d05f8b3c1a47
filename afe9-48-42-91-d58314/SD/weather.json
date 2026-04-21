@@ -1,5 +1,18 @@
 [
   {
+    "uploaded_at": "12:58:27",
+    "time": "1700",
+    "ground_shade": 25.7,
+    "ground_sun": 41.8,
+    "air_shade": 26.9,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "None",
+    "visibility": "Good",
+    "wind": "None",
+    "comments": "None"
+  },
+  {
     "uploaded_at": "12:55:25",
     "time": "1600",
     "ground_shade": 22.7,
