@@ -35,6 +35,28 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ── Map header ──────────────────────────────────────────────────────────── */
+#map-header {
+  flex-shrink: 0;
+  overflow: hidden;
+  border-bottom: 1px solid #222;
+  background: #000;
+  /* Height set by JS: 0px when no map, auto when map present */
+  transition: height 0.2s;
+}
+
+#map-header.has-map {
+  /* Constrain to a reasonable max height; image fills width naturally */
+  max-height: 240px;
+}
+
+#map-header img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 /* ── GRID VIEW ────────────────────────────────────────────────────────────── */
 #grid-view {
   position: fixed;
@@ -356,6 +378,7 @@ html, body {
     <div id="grid-title">SD</div>
     <div id="grid-count"></div>
   </div>
+  <div id="map-header"></div>
   <div id="grid-scroll">
     <div id="grid"></div>
   </div>
@@ -421,10 +444,27 @@ const IMAGES         = [
     "SD_036.jpg",
     "SD_037.jpg",
     "SD_038.jpg",
-    "SD_039.jpg"
+    "SD_039.jpg",
+    "separator_181939.jpg",
+    "SS20_001.jpg",
+    "SS20_002.jpg",
+    "SS20_003.jpg"
 ];
+const HAS_MAP        = false;
 const SEPARATOR_PREFIX = "separator_";   // separators start with this prefix
 function isSeparator(f) { return f.startsWith(SEPARATOR_PREFIX); }
+
+// ── Map header ────────────────────────────────────────────────────────────
+const mapHeader = document.getElementById('map-header');
+if (HAS_MAP) {
+  mapHeader.classList.add('has-map');
+  const mapImg = document.createElement('img');
+  mapImg.src = 'map.jpg';
+  mapHeader.appendChild(mapImg);
+} else {
+  mapHeader.style.height = '0px';
+  mapHeader.style.borderBottom = 'none';
+}
 
 // Pre-compute counts excluding separators — used for counter display
 // and grid badge numbering
