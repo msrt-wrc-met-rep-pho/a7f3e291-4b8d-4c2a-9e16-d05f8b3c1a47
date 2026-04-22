@@ -1,5 +1,19 @@
 [
   {
+    "uploaded_at": "00:46:36",
+    "time": "1030",
+    "box": "Box 9(4.76km) +250m",
+    "ground_shade": 19.9,
+    "ground_sun": 21.0,
+    "air_shade": 14.0,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "Lots",
+    "visibility": "Good",
+    "wind": "Gusty Gusty",
+    "comments": "Meatballs"
+  },
+  {
     "uploaded_at": "00:19:03",
     "time": "0900",
     "box": "Box 9(4.76km)",
