@@ -430,6 +430,12 @@ html, body {
 
 <script>
 
+// ── Cache busting ─────────────────────────────────────────────────────────
+// FIELD TEST FLAG: set to true to force fresh download of every image on
+// every page visit. Set to false for production — allows browser caching.
+var DISABLE_CACHE = true;
+var _cacheBust = DISABLE_CACHE ? ('?t=' + Date.now()) : '';
+
 const STAGE          = "SD";
 const IMAGES         = [
     "separator_151104.jpg",
@@ -475,7 +481,9 @@ const IMAGES         = [
     "SD_036.jpg",
     "SD_037.jpg",
     "SD_038.jpg",
-    "SD_039.jpg"
+    "SD_039.jpg",
+    "separator_152540.jpg",
+    "SS5_002.jpg"
 ];
 const HAS_MAP        = true;
 const SEPARATOR_PREFIX = "separator_";   // separators start with this prefix
@@ -519,12 +527,6 @@ const STAGE_NAME_API  = "SD";
 
 // Images are cached by the browser — no cache-busting needed since
 // filenames never change once uploaded.
-// ── Cache busting ─────────────────────────────────────────────────────────
-// FIELD TEST FLAG: set to true to force fresh download of every image on
-// every page visit. Set to false (or remove) for production — allows the
-// browser to cache images and reduces data usage on poor signal.
-const DISABLE_CACHE = true;
-const _cacheBust = DISABLE_CACHE ? ('?t=' + Date.now()) : '';
 function imgSrc(f) { return f + _cacheBust; }
 
 // ── Grid columns ───────────────────────────────────────────────────────────
