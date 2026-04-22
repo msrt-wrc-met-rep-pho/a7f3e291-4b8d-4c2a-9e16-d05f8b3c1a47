@@ -1,5 +1,19 @@
 [
   {
+    "uploaded_at": "08:41:08",
+    "time": "1021",
+    "box": "Box 9(4.76km)",
+    "ground_shade": 16.0,
+    "ground_sun": 18.8,
+    "air_shade": 20.5,
+    "road": "Humid",
+    "weather": "Dry",
+    "cloud": "None",
+    "visibility": "Good",
+    "wind": "Gales",
+    "comments": "HOT"
+  },
+  {
     "uploaded_at": "08:40:10",
     "time": "0900",
     "box": "Box 9(4.76km)",
