@@ -2,7 +2,7 @@
   "rally": "Rally Canarias 2026 - v0.3",
   "stages": {
     "SD": {
-      "count": 0,
+      "count": 1,
       "weather_count": 0,
       "rnc_count": 0
     },
