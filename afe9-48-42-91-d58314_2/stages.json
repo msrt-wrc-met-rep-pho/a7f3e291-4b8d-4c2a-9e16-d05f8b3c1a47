@@ -3,7 +3,7 @@
   "stages": {
     "SD": {
       "count": 1,
-      "weather_count": 0,
+      "weather_count": 1,
       "rnc_count": 0
     },
     "SS1": {
