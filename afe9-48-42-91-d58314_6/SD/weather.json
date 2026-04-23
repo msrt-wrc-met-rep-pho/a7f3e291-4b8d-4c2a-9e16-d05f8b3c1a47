@@ -1,5 +1,19 @@
 [
   {
+    "uploaded_at": "23:13:10",
+    "time": "0923",
+    "box": "Box 10(5.30km) +80",
+    "ground_shade": 17.0,
+    "ground_sun": 18.3,
+    "air_shade": 15.9,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "High White",
+    "visibility": "Good",
+    "wind": "None",
+    "comments": "None"
+  },
+  {
     "uploaded_at": "23:12:45",
     "time": "0857",
     "box": "Box1(0.00km) -336m",
