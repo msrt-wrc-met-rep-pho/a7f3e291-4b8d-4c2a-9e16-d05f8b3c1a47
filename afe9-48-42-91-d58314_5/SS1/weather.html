@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- last updated: 23/04/2026 16:08:11 -->
+<!-- last updated: 23/04/2026 17:08:04 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -155,6 +155,16 @@ body {
   font-size: 12px;
   color: var(--subtext);
   padding-right: 8px;
+}
+
+/* ── Toolbar icon ────────────────────────────────────────────────────────── */
+#toolbar-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ── Countdown bar ───────────────────────────────────────────────────────── */
@@ -325,6 +335,7 @@ body {
   </button>
   <div id="toolbar-title">SS1 — Weather</div>
   <div id="toolbar-count"></div>
+  <div id="toolbar-icon"></div>
 </div>
 
 <div id="graph-panel">
@@ -378,6 +389,19 @@ const RALLY_FOLDER    = "afe9-48-42-91-d58314_5";
 // Weather data injected by send_weather.py — array of report objects,
 // newest first (sorted at upload time).
 const WEATHER_DATA = [
+  {
+    "uploaded_at": "17:08:02",
+    "time": "1655",
+    "box": "Box1(0.00km)",
+    "ground_shade": 22.1,
+    "air_shade": 21.8,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "Medium Grey",
+    "visibility": "Good",
+    "wind": "Light",
+    "comments": ""
+  },
   {
     "uploaded_at": "16:08:09",
     "time": "1556",
@@ -661,6 +685,22 @@ function renderAll(data) {
 renderAll(WEATHER_DATA);
 
 // ── Back to launch ────────────────────────────────────────────────────────
+// ── Cloud icon in toolbar ─────────────────────────────────────────────────
+(function() {
+  const wrap = document.getElementById('toolbar-icon');
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "#e8c840");
+  svg.setAttribute("stroke-width", "2");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.style.width = "20px";
+  svg.style.height = "20px";
+  svg.innerHTML = `<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/>`;
+  wrap.appendChild(svg);
+})();
+
 document.getElementById('btn-launch').addEventListener('click', () => {
   window.location.href = '../launch.html';
 });
