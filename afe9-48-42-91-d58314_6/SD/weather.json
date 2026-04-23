@@ -1,5 +1,19 @@
 [
   {
+    "uploaded_at": "23:14:02",
+    "time": "1100",
+    "box": "Box 12(6.14km) 0",
+    "ground_shade": 18.0,
+    "ground_sun": 24.5,
+    "air_shade": 19.2,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "Medium Grey",
+    "visibility": "Good",
+    "wind": "Light",
+    "comments": "Medium grey cloud is incoming from north west."
+  },
+  {
     "uploaded_at": "23:13:46",
     "time": "1029",
     "box": "Box 12(6.14km) 0",
