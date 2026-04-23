@@ -1,0 +1,9 @@
+{
+  "name": "Rally Canarias 2026 - v1.0b",
+  "short_name": "Rally Canarias 2026 - v1.0b",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "any",
+  "start_url": "./launch.html"
+}
