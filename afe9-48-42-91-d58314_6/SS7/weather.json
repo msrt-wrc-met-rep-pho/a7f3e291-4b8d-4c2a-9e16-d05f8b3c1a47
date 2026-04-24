@@ -1,5 +1,19 @@
 [
   {
+    "uploaded_at": "20:51:35",
+    "time": "1720",
+    "box": "Box 11(17.87km) -510",
+    "ground_shade": 25.9,
+    "ground_sun": 32.6,
+    "air_shade": 24.3,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "Medium White",
+    "visibility": "Good",
+    "wind": "Gusty Light",
+    "comments": "Cloud cleared a little from last report, moving quickly in the breeze"
+  },
+  {
     "uploaded_at": "20:51:19",
     "time": "1627",
     "box": "Box 11(17.87km) -510",
