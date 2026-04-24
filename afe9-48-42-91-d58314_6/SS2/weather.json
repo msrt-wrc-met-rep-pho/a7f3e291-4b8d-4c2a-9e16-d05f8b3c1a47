@@ -1,5 +1,19 @@
 [
   {
+    "uploaded_at": "08:13:42",
+    "time": "0811",
+    "box": "Box 5(6.40km) 0",
+    "ground_shade": 8.2,
+    "ground_sun": 11.2,
+    "air_shade": 11.5,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "None",
+    "visibility": "Good",
+    "wind": "Light",
+    "comments": "Clouds below me but not over the stage"
+  },
+  {
     "uploaded_at": "07:54:21",
     "time": "0752",
     "box": "Box 5(6.40km) 0",
