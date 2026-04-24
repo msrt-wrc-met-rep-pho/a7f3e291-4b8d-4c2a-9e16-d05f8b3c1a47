@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<!-- last updated: 24/04/2026 06:58:10 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="../manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SS2 Weather</title>
+<style>
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:        #111;
+  --card-bg:   #1a1a1a;
+  --accent:    #e8c840;
+  --subtext:   #888;
+  --border:    #2a2a2a;
+  --radius:    10px;
+  --brand-h:   38px;
+  --toolbar-h: 36px;
+  --graph-h:   180px;
+}
+
+/* ── Temperature graph ───────────────────────────────────────────────────── */
+#graph-panel {
+  height: var(--graph-h);
+  flex-shrink: 0;
+  background: #0d0d0d;
+  border-bottom: 1px solid #222;
+  overflow: hidden;
+  position: relative;
+}
+
+#graph-panel svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#graph-legend {
+  position: absolute;
+  top: 7px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: none;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: #aaa;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+html {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+body {
+  height: 100dvh;
+  background: var(--bg);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Branding strip ──────────────────────────────────────────────────────── */
+#brand-strip {
+  height: 38px;
+  min-height: 38px;
+  background: #000;
+  border-bottom: 1px solid #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+#brand-strip img {
+  height: 26px;
+  width: auto;
+  display: block;
+  opacity: 0.9;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+#toolbar {
+  height: var(--toolbar-h);
+  min-height: var(--toolbar-h);
+  display: flex;
+  align-items: center;
+  padding: 0 6px 0 2px;
+  background: #000;
+  border-bottom: 1px solid #222;
+  gap: 6px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+#btn-launch {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: none; background: transparent;
+  color: #fff; cursor: pointer; flex-shrink: 0;
+}
+#btn-launch:active { background: rgba(255,255,255,0.12); }
+#btn-launch svg {
+  width: 22px; height: 22px;
+  fill: none; stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+#toolbar-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  flex: 1;
+}
+
+#toolbar-count {
+  font-size: 12px;
+  color: var(--subtext);
+  padding-right: 8px;
+}
+
+/* ── Toolbar icon ────────────────────────────────────────────────────────── */
+#toolbar-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Countdown bar ───────────────────────────────────────────────────────── */
+#countdown-bar-wrap {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 3px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 0 0 2px 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#countdown-bar {
+  height: 100%;
+  width: 100%;
+  background: var(--accent);
+  border-radius: 0 0 2px 2px;
+  transform-origin: left center;
+  animation: countdown 60s linear forwards;
+}
+
+@keyframes countdown {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/* ── Scrollable content ──────────────────────────────────────────────────── */
+#scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px;
+  min-height: 0;
+}
+
+/* ── Weather card ────────────────────────────────────────────────────────── */
+.weather-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.weather-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #141414;
+}
+
+.weather-card-time {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+
+.weather-card-uploaded {
+  font-size: 11px;
+  color: var(--subtext);
+}
+
+/* ── Data rows ───────────────────────────────────────────────────────────── */
+.weather-rows {
+  padding: 8px 0;
+}
+
+.weather-row {
+  display: flex;
+  align-items: center;
+  padding: 5px 14px;
+  gap: 8px;
+}
+
+.weather-row:nth-child(even) {
+  background: rgba(255,255,255,0.02);
+}
+
+.weather-label {
+  font-size: 11px;
+  color: var(--subtext);
+  width: 110px;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.weather-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  flex: 1;
+}
+
+/* Non-temperature values are plain white */
+
+/* Temperature values — matched to graph line colours */
+.weather-value.temp-ground-shade { color: #64b5f6; }  /* blue */
+.weather-value.temp-ground-sun   { color: #e8c840; }  /* yellow */
+.weather-value.temp-air-shade    { color: #81c784; }  /* green */
+
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(232,200,64,0.95);
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+  white-space: nowrap;
+  z-index: 50;
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+#empty {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--subtext);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ── Responsive graph height ─────────────────────────────────────────────── */
+@media (max-height: 500px) {
+  :root { --graph-h: 120px; }
+}
+
+@media (max-height: 350px) {
+  :root { --graph-h: 80px; }
+}
+
+</style>
+</head>
+<body>
+
+<div id="brand-strip">
+  <img src="../../msport_logo.png" alt="M-Sport">
+  <img src="../../stagehand_logo.png" alt="StageHand">
+</div>
+
+<div id="toolbar">
+  <div id="countdown-bar-wrap">
+    <div id="countdown-bar"></div>
+  </div>
+  <button id="btn-launch" aria-label="Back to rally">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <div id="toolbar-title">SS2 - Desc — Weather</div>
+  <div id="toolbar-count"></div>
+  <div id="toolbar-icon"></div>
+</div>
+
+<div id="graph-panel">
+  <svg id="graph-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div id="graph-legend"></div>
+</div>
+
+<div id="scroll">
+  <div id="cards"></div>
+</div>
+
+<div id="empty">No weather reports yet.</div>
+<div id="toast"></div>
+
+<script>
+
+// ── Cache busting ─────────────────────────────────────────────────────────
+// FIELD TEST FLAG: set to true to force fresh download on every page visit.
+// Set to false for production.
+const DISABLE_CACHE = false;
+
+
+// ── GitHub token — read from URL hash or localStorage ─────────────────────
+// Share URL as: launch.html#t=YOUR_TOKEN
+// Token is stored in localStorage so it only needs to be in the URL once.
+(function() {
+  const hash = window.location.hash;
+  const match = hash.match(/[#&]t=([^&]+)/);
+  if (match) {
+    localStorage.setItem('gh_token', match[1]);
+    // Clean the token from the URL without reloading
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+})();
+
+function _ghToken() {
+  return localStorage.getItem('gh_token') || '';
+}
+
+function _ghHeaders() {
+  const t = _ghToken();
+  const h = { 'Accept': 'application/vnd.github.v3+json' };
+  if (t) h['Authorization'] = 'token ' + t;
+  return h;
+}
+const STAGE        = "SS2";
+const GITHUB_USERNAME = "msrt-wrc-met-rep-pho";
+const GITHUB_REPO     = "a7f3e291-4b8d-4c2a-9e16-d05f8b3c1a47";
+const RALLY_FOLDER    = "afe9-48-42-91-d58314_5";
+
+// Weather data injected by send_weather.py — array of report objects,
+// newest first (sorted at upload time).
+const WEATHER_DATA = [
+  {
+    "uploaded_at": "06:58:08",
+    "time": "0700",
+    "box": "Box 5(6.40km) 0",
+    "ground_shade": 7.2,
+    "air_shade": 6.8,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "None",
+    "visibility": "Good",
+    "wind": "Light",
+    "comments": "None"
+  }
+];
+
+
+
+// ── Build a single weather card ───────────────────────────────────────────
+function buildCard(report) {
+  const card = document.createElement('div');
+  card.className = 'weather-card';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'weather-card-header';
+
+  const timeEl = document.createElement('div');
+  timeEl.className = 'weather-card-time';
+  const boxPart = report.box ? ` - ${report.box}` : '';
+  timeEl.textContent = `${report.time || '—'}${boxPart}`;
+  header.appendChild(timeEl);
+
+  const uploadedEl = document.createElement('div');
+  uploadedEl.className = 'weather-card-uploaded';
+  uploadedEl.textContent = `Uploaded ${report.uploaded_at || ''}`;
+  header.appendChild(uploadedEl);
+  card.appendChild(header);
+
+  // Data rows
+  const rows = document.createElement('div');
+  rows.className = 'weather-rows';
+
+  const fields = [
+    { label: 'Ground Shade',  key: 'ground_shade',  unit: ' °C', cls: 'temp-ground-shade' },
+    { label: 'Ground Sun',    key: 'ground_sun',    unit: ' °C', cls: 'temp-ground-sun'   },
+    { label: 'Air Shade',     key: 'air_shade',     unit: ' °C', cls: 'temp-air-shade'    },
+    { label: 'Road',          key: 'road',          unit: '',    cls: ''     },
+    { label: 'Weather',       key: 'weather',       unit: '',    cls: ''     },
+    { label: 'Cloud',         key: 'cloud',         unit: '',    cls: ''     },
+    { label: 'Visibility',    key: 'visibility',    unit: '',    cls: ''     },
+    { label: 'Wind',          key: 'wind',          unit: '',    cls: ''     },
+    { label: 'Comments',      key: 'comments',      unit: '',    cls: ''     },
+  ];
+
+  fields.forEach(f => {
+    const val = report[f.key];
+    if (val === undefined || val === null) return;
+
+    const row = document.createElement('div');
+    row.className = 'weather-row';
+
+    const label = document.createElement('div');
+    label.className = 'weather-label';
+    label.textContent = f.label;
+    row.appendChild(label);
+
+    const value = document.createElement('div');
+    const extraCls = f.cls;
+    value.className = 'weather-value' + (extraCls ? ' ' + extraCls : '');
+    value.textContent = val + f.unit;
+    row.appendChild(value);
+
+    rows.appendChild(row);
+  });
+
+  card.appendChild(rows);
+  return card;
+}
+
+
+// ── Temperature graph ─────────────────────────────────────────────────────
+// Colours for Ground Shade, Ground Sun, Air Shade
+const SERIES = [
+  { key: 'ground_shade', label: 'Gnd Shade', color: '#64b5f6' },  // blue
+  { key: 'ground_sun',   label: 'Gnd Sun',   color: '#e8c840' },  // yellow
+  { key: 'air_shade',    label: 'Air Shade',  color: '#81c784' },  // green
+];
+
+function _timeToMinutes(t) {
+  // t is a string like "1212" or "09:30" or "9:30"
+  if (!t) return null;
+  const clean = t.replace(':', '');
+  if (clean.length < 3) return null;
+  const h = parseInt(clean.slice(0, clean.length - 2), 10);
+  const m = parseInt(clean.slice(-2), 10);
+  if (isNaN(h) || isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+function drawGraph(data) {
+  const svg    = document.getElementById('graph-svg');
+  const legend = document.getElementById('graph-legend');
+  svg.innerHTML    = '';
+  legend.innerHTML = '';
+
+  if (!data || data.length === 0) return;
+
+  // Collect all temperature values for Y scaling
+  const allTemps = [];
+  data.forEach(r => {
+    SERIES.forEach(s => {
+      const v = parseFloat(r[s.key]);
+      if (!isNaN(v)) allTemps.push(v);
+    });
+  });
+
+  if (allTemps.length === 0) return;
+
+  // X axis: auto-scaled to data range with 30-minute padding each side
+  const allMins = [];
+  data.forEach(r => {
+    const m = _timeToMinutes(r.time);
+    if (m !== null) allMins.push(m);
+  });
+  if (allMins.length === 0) return;
+  const X_PAD_MIN   = 30;
+  const X_START_MIN = Math.max(0,    Math.min(...allMins) - X_PAD_MIN);
+  const X_END_MIN   = Math.min(1439, Math.max(...allMins) + X_PAD_MIN);
+  const X_RANGE_MIN = X_END_MIN - X_START_MIN || 60;
+
+  const PAD_L = 32, PAD_R = 8, PAD_T = 14, PAD_B = 22;
+
+  // Auto-scale Y with padding
+  const rawMin = Math.min(...allTemps);
+  const rawMax = Math.max(...allTemps);
+  const range  = rawMax - rawMin || 10;
+  const pad    = range * 0.25;
+  const yMin   = rawMin - pad;
+  const yMax   = rawMax + pad;
+  const yRange = yMax - yMin;
+
+  // Use actual pixel dimensions via getBoundingClientRect
+  const panel = document.getElementById('graph-panel');
+  const W     = panel.clientWidth  || 360;
+  const H     = panel.clientHeight || 180;
+
+  const plotW = W - PAD_L - PAD_R;
+  const plotH = H - PAD_T - PAD_B;
+
+  function xPx(minutes) {
+    return PAD_L + ((minutes - X_START_MIN) / X_RANGE_MIN) * plotW;
+  }
+  function yPx(temp) {
+    return PAD_T + (1 - (temp - yMin) / yRange) * plotH;
+  }
+
+  function _el(tag, attrs) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+    return el;
+  }
+
+  // ── Grid lines (Y) ───────────────────────────────────────────────────────
+  // Pick ~4 round Y gridlines
+  const yStep = Math.ceil(yRange / 4 / 5) * 5 || 5;
+  const yFirst = Math.ceil(yMin / yStep) * yStep;
+  for (let y = yFirst; y <= yMax; y += yStep) {
+    const py = yPx(y);
+    svg.appendChild(_el('line', {
+      x1: PAD_L, y1: py, x2: W - PAD_R, y2: py,
+      stroke: '#222', 'stroke-width': '1'
+    }));
+    const txt = _el('text', {
+      x: PAD_L - 4, y: py + 4,
+      fill: '#555', 'font-size': '9',
+      'text-anchor': 'end', 'font-family': 'sans-serif'
+    });
+    txt.textContent = y + '°';
+    svg.appendChild(txt);
+  }
+
+  // ── X axis time labels — derived from auto-scaled range ─────────────────
+  // Pick a step so we get roughly 4-6 labels; snap to nearest 30min
+  const xRangeHours = (X_END_MIN - X_START_MIN) / 60;
+  const xStepMin = xRangeHours <= 2 ? 30 : xRangeHours <= 4 ? 60 : 120;
+  const xFirstH  = Math.ceil(X_START_MIN / xStepMin) * xStepMin;
+  for (let mins = xFirstH; mins <= X_END_MIN; mins += xStepMin) {
+    const px = xPx(mins);
+    if (px < PAD_L || px > W - PAD_R) continue;
+    svg.appendChild(_el('line', {
+      x1: px, y1: PAD_T, x2: px, y2: H - PAD_B,
+      stroke: '#1e1e1e', 'stroke-width': '1'
+    }));
+    const hh = Math.floor(mins / 60);
+    const mm = mins % 60;
+    const txt = _el('text', {
+      x: px, y: H - PAD_B + 12,
+      fill: '#444', 'font-size': '9',
+      'text-anchor': 'middle', 'font-family': 'sans-serif'
+    });
+    txt.textContent = `${hh}:${mm.toString().padStart(2,'0')}`;
+    svg.appendChild(txt);
+  }
+
+  // ── Plot each series ──────────────────────────────────────────────────────
+  SERIES.forEach(s => {
+    // Collect points sorted by time
+    const points = [];
+    data.forEach(r => {
+      const mins = _timeToMinutes(r.time);
+      const val  = parseFloat(r[s.key]);
+      if (mins !== null && !isNaN(val)) {
+        points.push({ mins, val });
+      }
+    });
+    points.sort((a, b) => a.mins - b.mins);
+
+    if (points.length === 0) return;
+
+    if (points.length === 1) {
+      // Single point — draw a filled dot
+      const p = points[0];
+      svg.appendChild(_el('circle', {
+        cx: xPx(p.mins), cy: yPx(p.val), r: '5',
+        fill: s.color
+      }));
+    } else {
+      // Polyline
+      const pts = points.map(p => `${xPx(p.mins)},${yPx(p.val)}`).join(' ');
+      svg.appendChild(_el('polyline', {
+        points: pts,
+        fill: 'none',
+        stroke: s.color,
+        'stroke-width': '3',
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round'
+      }));
+      // Dots at each data point
+      points.forEach(p => {
+        svg.appendChild(_el('circle', {
+          cx: xPx(p.mins), cy: yPx(p.val), r: '4',
+          fill: s.color
+        }));
+      });
+    }
+
+    // Legend entry
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    const dot = document.createElement('div');
+    dot.className = 'legend-dot';
+    dot.style.background = s.color;
+    const lbl = document.createElement('div');
+    lbl.className = 'legend-label';
+    lbl.textContent = s.label;
+    item.appendChild(dot);
+    item.appendChild(lbl);
+    legend.appendChild(item);
+  });
+}
+
+// ── Render all reports ────────────────────────────────────────────────────
+const cardsEl = document.getElementById('cards');
+let knownCount = 0;
+
+function renderAll(data) {
+  cardsEl.innerHTML = '';
+  if (!data || data.length === 0) {
+    document.getElementById('empty').style.display = 'block';
+    document.getElementById('toolbar-count').textContent = '';
+    return;
+  }
+  document.getElementById('empty').style.display = 'none';
+  document.getElementById('toolbar-count').textContent =
+    `${data.length} report${data.length > 1 ? 's' : ''}`;
+  data.forEach(r => cardsEl.appendChild(buildCard(r)));
+  knownCount = data.length;
+  drawGraph(data);
+}
+
+renderAll(WEATHER_DATA);
+
+// ── Back to launch ────────────────────────────────────────────────────────
+// ── Cloud icon in toolbar ─────────────────────────────────────────────────
+(function() {
+  const wrap = document.getElementById('toolbar-icon');
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "#e8c840");
+  svg.setAttribute("stroke-width", "2");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.style.width = "20px";
+  svg.style.height = "20px";
+  svg.innerHTML = `<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/>`;
+  wrap.appendChild(svg);
+})();
+
+document.getElementById('btn-launch').addEventListener('click', () => {
+  window.location.href = '../launch.html';
+});
+
+// ── Toast helper ──────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Countdown bar ─────────────────────────────────────────────────────────
+function resetCountdownBar() {
+  const bar = document.getElementById('countdown-bar');
+  bar.style.animation = 'none';
+  bar.offsetHeight;
+  bar.style.animation = '';
+}
+
+// ── Live refresh — poll weather.json via GitHub API every 60s ─────────────
+const _cacheSuffix = DISABLE_CACHE ? ('?t=' + Date.now()) : '';
+const _apiBase = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${RALLY_FOLDER}/${STAGE}/weather.json${_cacheSuffix}`;
+
+async function checkForUpdates() {
+  if (document.hidden) { resetCountdownBar(); return; }
+
+  try {
+    const r = await fetch(_apiBase, {
+      headers: _ghHeaders()
+    });
+
+    if (r.status === 403) {
+      const remaining = r.headers.get('X-RateLimit-Remaining');
+      if (remaining === '0') {
+        const reset = r.headers.get('X-RateLimit-Reset');
+        const resetTime = reset
+          ? new Date(parseInt(reset) * 1000).toLocaleTimeString()
+          : 'shortly';
+        showToast(`Rate limit reached — resets ${resetTime}`);
+        resetCountdownBar();
+        return;
+      }
+    }
+
+    if (!r.ok) { resetCountdownBar(); return; }
+
+    const apiData = await r.json();
+    const data    = JSON.parse(atob(apiData.content.replace(/\n/g, '')));
+
+    if (data.length > knownCount) {
+      const added = data.length - knownCount;
+      renderAll(data);
+      showToast(`+${added} new report${added > 1 ? 's' : ''}`);
+    }
+
+  } catch (e) {
+    // Silent fail
+  }
+
+  resetCountdownBar();
+}
+
+resetCountdownBar();
+setInterval(checkForUpdates, 60000);
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) checkForUpdates();
+});
+
+</script>
+</body>
+</html>
