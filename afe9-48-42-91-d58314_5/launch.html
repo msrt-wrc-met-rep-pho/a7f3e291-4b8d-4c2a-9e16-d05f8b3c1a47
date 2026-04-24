@@ -283,26 +283,30 @@ html, body {
 .stage-divider {
   height: 3px;
   background: var(--accent);
-  margin: 4px 0;
   border-radius: 2px;
+  grid-column: 1 / -1;
+}
+
+/* ── Stage list grid ─────────────────────────────────────────────────────── */
+#stage-list {
+  display: grid;
+  grid-template-columns: 52px 1fr 1fr 1fr;
+  gap: 8px;
+  align-items: center;
 }
 
 /* ── Stage row ───────────────────────────────────────────────────────────── */
 .stage-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
+  display: contents;
 }
 
 /* Stage label — fixed width so icons align */
 .stage-label {
-  width: 52px;
-  flex-shrink: 0;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  align-self: center;
 }
 
 .stage-label-id {
@@ -443,7 +447,7 @@ html, body {
   <div id="stage-list"></div>
 </div>
 
-<div id="status">Loading stages...</div>
+<div id="status"><div style="color:var(--accent);font-weight:800;font-size:18px;letter-spacing:0.08em;margin-bottom:8px;">STAGEHAND</div>Loading...</div>
 
 <script>
 
@@ -683,7 +687,19 @@ function buildRow(key, info, list) {
     rncCard.className = 'icon-card empty';
     rncCard.style.visibility = 'hidden';
   }
-  row.appendChild(rncCard);
+  // Apply RNC row span
+  const rncSpan = info.rnc_span !== undefined ? info.rnc_span : 1;
+  if (rncSpan === 0) {
+    // No cell — skip entirely, handled by a spanning cell above
+  } else if (rncSpan > 1) {
+    rncCard.style.gridRow = `span ${rncSpan}`;
+    rncCard.style.alignSelf = 'stretch';
+    rncCard.style.height = 'auto';
+  }
+
+  if (rncSpan !== 0) {
+    row.appendChild(rncCard);
+  }
 
   return row;
 }
