@@ -1,5 +1,18 @@
 [
   {
+    "uploaded_at": "08:02:29",
+    "time": "0801",
+    "box": "Box 5(5.85km) -259",
+    "ground_shade": 8.1,
+    "air_shade": 9.5,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "None",
+    "visibility": "Good",
+    "wind": "Light",
+    "comments": "None"
+  },
+  {
     "uploaded_at": "07:15:12",
     "time": "0709",
     "box": "Box 6(5.90km) +80",
