@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<!-- last updated: 17/04/2026 11:15:00 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="../manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>SS3B</title>
+<style>
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:        #111;
+  --thumb-bg:  #1e1e1e;
+  --accent:    #e8c840;
+  --subtext:   #888;
+  --radius:    6px;
+  --brand-h:   38px;
+  --toolbar-h: 36px;
+}
+
+html, body {
+  height: 100dvh;
+  background: var(--bg);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Map header ──────────────────────────────────────────────────────────── */
+#map-header {
+  flex-shrink: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+#map-header.has-map {
+  height: 90px;
+  border-bottom: 1px solid #222;
+  padding: 4px 8px;
+}
+
+#map-header img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* ── Map overlay ─────────────────────────────────────────────────────────── */
+#map-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0,0,0,0.92);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+#map-overlay.visible {
+  display: flex;
+}
+
+#map-overlay img {
+  max-width: 96%;
+  max-height: 96%;
+  object-fit: contain;
+  display: block;
+  border-radius: 6px;
+}
+
+/* ── Branding strip ──────────────────────────────────────────────────────── */
+#brand-strip {
+  height: 38px;
+  min-height: 38px;
+  background: #000;
+  border-bottom: 1px solid #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+
+#brand-strip img {
+  height: 26px;
+  width: auto;
+  display: block;
+  opacity: 0.9;
+}
+
+/* ── RNC icon in toolbar ─────────────────────────────────────────────────── */
+#rnc-icon-wrap {
+  width: 32px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#rnc-icon-wrap svg {
+  width: 32px;
+  height: 16px;
+}
+
+/* ── GRID VIEW ────────────────────────────────────────────────────────────── */
+#grid-view {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+#grid-view.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#grid-toolbar {
+  height: var(--toolbar-h);
+  min-height: var(--toolbar-h);
+  display: flex;
+  align-items: center;
+  padding: 0 8px 0 4px;
+  background: #000;
+  border-bottom: 1px solid #222;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+#btn-launch {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: none; background: transparent;
+  color: #fff; cursor: pointer; flex-shrink: 0;
+}
+
+#btn-launch:active { background: rgba(255,255,255,0.12); }
+
+#btn-launch svg {
+  width: 22px; height: 22px;
+  fill: none; stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+#grid-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  flex: 1;
+}
+
+#grid-count {
+  font-size: 12px;
+  color: var(--subtext);
+  padding-right: 8px;
+}
+
+/* ── Countdown bar ──────────────────────────────────────────────────────────
+   Sits at the top of the toolbar, thin bar draining left to right over 60s.
+   CSS animation handles the visual — JS just resets it on each cycle.     */
+#countdown-bar-wrap {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 3px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 0 0 2px 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#countdown-bar {
+  height: 100%;
+  width: 100%;
+  background: var(--accent);
+  border-radius: 0 0 2px 2px;
+  transform-origin: left center;
+  animation: countdown 60s linear forwards;
+}
+
+@keyframes countdown {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+#grid-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px;
+}
+
+#grid {
+  display: grid;
+  gap: 4px;
+}
+
+.thumb-cell {
+  position: relative;
+  aspect-ratio: 3/2;
+  background: var(--thumb-bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* Separator thumbnail — same size as normal cell, not tappable */
+.thumb-cell.is-separator {
+  cursor: default;
+  pointer-events: none;
+}
+
+.thumb-cell:not(.is-separator):active { transform: scale(0.95); }
+
+.thumb-cell img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.thumb-cell img.loaded { opacity: 1; }
+
+.thumb-badge {
+  position: absolute;
+  bottom: 4px; right: 5px;
+  font-size: 10px; font-weight: 700;
+  color: rgba(255,255,255,0.75);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+  pointer-events: none;
+}
+
+.thumb-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumb-loader-ring {
+  width: 20px; height: 20px;
+  border: 2px solid rgba(255,255,255,0.1);
+  border-top-color: rgba(255,255,255,0.4);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ── FULLSCREEN VIEWER ────────────────────────────────────────────────────── */
+#viewer {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+#viewer.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+}
+
+#viewer-toolbar {
+  height: var(--toolbar-h);
+  min-height: var(--toolbar-h);
+  display: flex;
+  align-items: center;
+  padding: 0 8px 0 4px;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  gap: 8px;
+  flex-shrink: 0;
+  z-index: 10;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+#btn-back {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: none; background: transparent;
+  color: #fff; cursor: pointer; flex-shrink: 0;
+}
+
+#btn-back:active { background: rgba(255,255,255,0.12); }
+
+#btn-back svg {
+  width: 22px; height: 22px;
+  fill: none; stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+#viewer-title {
+  flex: 1;
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+#viewer-counter {
+  font-size: 13px; font-weight: 600;
+  color: var(--subtext);
+  padding-right: 4px;
+  transition: opacity 0.2s;
+}
+
+#viewer-counter.hidden { opacity: 0; }
+
+#slide-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  touch-action: pan-x pan-y;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: none;
+}
+
+.slide.active {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.slide.prev {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+.slide img {
+  max-width: 100%; max-height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  transform-origin: center center;
+}
+
+.slide .loader {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(255,255,255,0.12);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  position: absolute;
+}
+
+.tap-zone {
+  position: absolute;
+  top: 0; height: 100%; width: 25%;
+  z-index: 20; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#tap-prev { left: 0; }
+#tap-next { right: 0; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Toast notification ───────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(232,200,64,0.95);
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+  white-space: nowrap;
+  z-index: 50;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+</style>
+</head>
+<body>
+
+<!-- Grid view -->
+<div id="grid-view">
+<div id="brand-strip">
+  <img src="../../msport_logo.png" alt="M-Sport">
+  <img src="../../stagehand_logo.png" alt="StageHand">
+</div>
+  <div id="grid-toolbar">
+    <div id="countdown-bar-wrap">
+      <div id="countdown-bar"></div>
+    </div>
+    <button id="btn-launch" aria-label="Back to rally">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div id="grid-title">SS3B</div>
+    <div id="grid-count"></div>
+    <div id="rnc-icon-wrap"></div>
+  </div>
+  <div id="map-header"></div>
+  <div id="grid-scroll">
+    <div id="grid"></div>
+  </div>
+  <!-- Toast notification for new images -->
+  <div id="toast"></div>
+</div>
+
+<!-- Map overlay -->
+<div id="map-overlay">
+  <img id="map-overlay-img" src="" alt="Stage map">
+</div>
+
+<!-- Fullscreen viewer -->
+<div id="viewer">
+  <div id="viewer-toolbar">
+    <button id="btn-back" aria-label="Back to thumbnails">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div id="viewer-title">SS3B</div>
+    <div id="viewer-counter">1 / N</div>
+  </div>
+  <div id="slide-container">
+    <div id="tap-prev" class="tap-zone"></div>
+    <div id="tap-next" class="tap-zone"></div>
+  </div>
+</div>
+
+<script>
+
+// ── Cache busting ─────────────────────────────────────────────────────────
+// FIELD TEST FLAG: set to true to force fresh download of every image on
+// every page visit. Set to false for production — allows browser caching.
+var DISABLE_CACHE = false;
+var _cacheBust = DISABLE_CACHE ? ('?t=' + Date.now()) : '';
+
+const STAGE          = "SS3B";
+const IMAGES         = [
+    "separator_065649.jpg",
+    "SS3_003.jpg",
+    "SS3_004.jpg",
+    "SS3_005.jpg",
+    "SS3_006.jpg",
+    "SS3_007.jpg",
+    "SS3_008.jpg",
+    "SS3_009.jpg",
+    "SS3_010.jpg",
+    "SS3_011.jpg",
+    "SS3_012.jpg",
+    "SS3_013.jpg",
+    "SS3_014.jpg",
+    "SS3_015.jpg",
+    "SS3_016.jpg",
+    "SS3_017.jpg",
+    "SS3_018.jpg",
+    "SS3_019.jpg",
+    "SS3_020.jpg",
+    "SS3_021.jpg",
+    "SS3_022.jpg",
+    "SS3_023.jpg",
+    "SS3_024.jpg",
+    "SS3_025.jpg",
+    "SS3_026.jpg",
+    "SS3_027.jpg",
+    "SS3_028.jpg",
+    "SS3_029.jpg",
+    "SS3_030.jpg",
+    "SS3_031.jpg",
+    "SS3_032.jpg",
+    "SS3_033.jpg"
+];
+const HAS_MAP        = false;
+const HAS_RNC_ICON   = false;
+const SEPARATOR_PREFIX = "separator_";   // separators start with this prefix
+function isSeparator(f) { return f.startsWith(SEPARATOR_PREFIX); }
+
+// ── Map header ────────────────────────────────────────────────────────────
+const mapHeader = document.getElementById('map-header');
+if (HAS_MAP) {
+  mapHeader.classList.add('has-map');
+  mapHeader.style.cursor = 'pointer';
+  const mapImg = document.createElement('img');
+  mapImg.src = 'map.jpg' + _cacheBust;
+  mapHeader.appendChild(mapImg);
+
+  // Tap header to expand map overlay
+  const overlay    = document.getElementById('map-overlay');
+  const overlayImg = document.getElementById('map-overlay-img');
+  overlayImg.src   = 'map.jpg' + _cacheBust;
+
+  mapHeader.addEventListener('click', () => {
+    overlay.classList.add('visible');
+  });
+  overlay.addEventListener('click', () => {
+    overlay.classList.remove('visible');
+  });
+} else {
+  mapHeader.style.height = '0px';
+  mapHeader.style.borderBottom = 'none';
+}
+
+// ── Camera icon in toolbar ────────────────────────────────────────────────
+const rncIconWrap = document.getElementById('rnc-icon-wrap');
+const camSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+camSvg.setAttribute("viewBox", "0 0 24 24");
+camSvg.setAttribute("fill", "none");
+camSvg.setAttribute("stroke", "#e8c840");
+camSvg.setAttribute("stroke-width", "2");
+camSvg.setAttribute("stroke-linecap", "round");
+camSvg.setAttribute("stroke-linejoin", "round");
+camSvg.style.width = "20px";
+camSvg.style.height = "20px";
+camSvg.innerHTML = `
+  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+  <circle cx="12" cy="13" r="4"/>`;
+rncIconWrap.appendChild(camSvg);
+
+// Pre-compute counts excluding separators — used for counter display
+// and grid badge numbering
+const totalWithSep = IMAGES.length;
+const realTotal    = IMAGES.filter(f => !isSeparator(f)).length;
+
+// ── GitHub API for live updates — injected by send_stage_images.py ────────
+
+// ── GitHub token — read from URL hash or localStorage ─────────────────────
+// Share URL as: launch.html#t=YOUR_TOKEN
+// Token is stored in localStorage so it only needs to be in the URL once.
+(function() {
+  const hash = window.location.hash;
+  const match = hash.match(/[#&]t=([^&]+)/);
+  if (match) {
+    localStorage.setItem('gh_token', match[1]);
+    // Clean the token from the URL without reloading
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+})();
+
+function _ghToken() {
+  return localStorage.getItem('gh_token') || '';
+}
+
+function _ghHeaders() {
+  const t = _ghToken();
+  const h = { 'Accept': 'application/vnd.github.v3+json' };
+  if (t) h['Authorization'] = 'token ' + t;
+  return h;
+}
+const GITHUB_USERNAME = "msrt-wrc-met-rep-pho";
+const GITHUB_REPO     = "a7f3e291-4b8d-4c2a-9e16-d05f8b3c1a47";
+const RALLY_FOLDER    = "afe9-48-42-91-d58314_5";
+const STAGE_NAME_API  = "SS3B";
+
+// Images are cached by the browser — no cache-busting needed since
+// filenames never change once uploaded.
+function imgSrc(f) { return f + _cacheBust; }
+
+// ── Grid columns ───────────────────────────────────────────────────────────
+function updateCols() {
+  const cols = window.innerWidth > window.innerHeight ? 5 : 3;
+  document.getElementById('grid').style.gridTemplateColumns =
+    `repeat(${cols}, 1fr)`;
+}
+window.addEventListener('resize', updateCols);
+window.addEventListener('orientationchange', updateCols);
+updateCols();
+
+// ── Thumbnail grid ─────────────────────────────────────────────────────────
+const gridEl = document.getElementById('grid');
+
+// Grid toolbar shows real image count only
+document.getElementById('grid-count').textContent = `${realTotal} images`;
+
+let realIndexInGrid = 0;   // running count of non-separator images for badge
+
+IMAGES.forEach((filename, i) => {
+  const isSep = isSeparator(filename);
+
+  const cell  = document.createElement('div');
+  cell.className = isSep ? 'thumb-cell is-separator' : 'thumb-cell';
+
+  if (!isSep) {
+    const loaderWrap = document.createElement('div');
+    loaderWrap.className = 'thumb-loader';
+    const ring = document.createElement('div');
+    ring.className = 'thumb-loader-ring';
+    loaderWrap.appendChild(ring);
+    cell.appendChild(loaderWrap);
+
+    const img = document.createElement('img');
+    img.src = imgSrc(filename);
+    img.onload  = () => { img.classList.add('loaded'); loaderWrap.remove(); };
+    img.onerror = () => loaderWrap.remove();
+    cell.appendChild(img);
+
+    realIndexInGrid++;
+    const badge = document.createElement('div');
+    badge.className = 'thumb-badge';
+    badge.textContent = realIndexInGrid;
+    cell.appendChild(badge);
+
+    cell.addEventListener('click', () => openViewer(i));
+  } else {
+    // Separator — load the grey image, no badge, not tappable
+    const loaderWrap = document.createElement('div');
+    loaderWrap.className = 'thumb-loader';
+    const ring = document.createElement('div');
+    ring.className = 'thumb-loader-ring';
+    loaderWrap.appendChild(ring);
+    cell.appendChild(loaderWrap);
+
+    const img = document.createElement('img');
+    img.src = imgSrc(filename);
+    img.onload  = () => { img.classList.add('loaded'); loaderWrap.remove(); };
+    img.onerror = () => loaderWrap.remove();
+    cell.appendChild(img);
+  }
+
+  gridEl.appendChild(cell);
+});
+
+// ── Back to launch page ────────────────────────────────────────────────────
+document.getElementById('btn-launch').addEventListener('click', () => {
+  window.location.href = '../launch.html';
+});
+
+// ── Viewer ─────────────────────────────────────────────────────────────────
+const viewer         = document.getElementById('viewer');
+const gridView       = document.getElementById('grid-view');
+const viewerCounter  = document.getElementById('viewer-counter');
+const slideContainer = document.getElementById('slide-container');
+
+let current = 0;
+const PRELOAD_AHEAD  = 3;
+const PRELOAD_BEHIND = 1;
+
+// Build a running map from IMAGES index → real image number (1-based)
+// Separators map to null.
+const realImageNumber = IMAGES.map((() => {
+  let n = 0;
+  return f => isSeparator(f) ? null : ++n;
+})());
+
+const slides = IMAGES.map((filename) => {
+  const div = document.createElement('div');
+  div.className = 'slide';
+
+  const loader = document.createElement('div');
+  loader.className = 'loader';
+  div.appendChild(loader);
+
+  const img = document.createElement('img');
+  img.dataset.src = imgSrc(filename);
+  img.onload  = () => { if (loader.parentNode) loader.remove(); };
+  img.onerror = () => { if (loader.parentNode) loader.remove(); };
+  div.appendChild(img);
+
+  slideContainer.appendChild(div);
+  return div;
+});
+
+function preloadAround(index) {
+  const toLoad = new Set();
+  for (let d = -PRELOAD_BEHIND; d <= PRELOAD_AHEAD; d++) {
+    toLoad.add(((index + d) % totalWithSep + totalWithSep) % totalWithSep);
+  }
+  toLoad.forEach(i => {
+    const img = slides[i].querySelector('img');
+    if (img && !img.src && img.dataset.src) img.src = img.dataset.src;
+  });
+}
+
+function updateViewerUI() {
+  const isSep = isSeparator(IMAGES[current]);
+  if (isSep) {
+    // Hide counter entirely when on separator
+    viewerCounter.classList.add('hidden');
+  } else {
+    // Show "n / realTotal" — separator positions don't count
+    viewerCounter.textContent = `${realImageNumber[current]} / ${realTotal}`;
+    viewerCounter.classList.remove('hidden');
+  }
+}
+
+function openViewer(index) {
+  current = index;
+  slides.forEach((s, i) => {
+    s.classList.remove('active', 'prev');
+    s.style.transform = i === index ? 'translateX(0)' : 'translateX(100%)';
+    s.style.opacity   = i === index ? '1' : '0';
+    if (i === index) s.classList.add('active');
+  });
+  resetZoom();
+  updateViewerUI();
+  preloadAround(index);
+  gridView.classList.add('hidden');
+  viewer.classList.add('visible');
+}
+
+function closeViewer() {
+  viewer.classList.remove('visible');
+  gridView.classList.remove('hidden');
+  resetZoom();
+}
+
+document.getElementById('btn-back').addEventListener('click', closeViewer);
+
+function goTo(index, direction) {
+  if (index === current) return;
+  resetZoom();
+  const outgoing = slides[current];
+  const incoming = slides[index];
+  incoming.style.transform = direction > 0 ? 'translateX(100%)' : 'translateX(-100%)';
+  incoming.classList.remove('prev');
+  incoming.offsetHeight;
+  outgoing.classList.remove('active');
+  outgoing.classList.add('prev');
+  incoming.classList.add('active');
+  incoming.style.transform = '';
+  incoming.style.opacity = '';
+  setTimeout(() => {
+    outgoing.classList.remove('prev');
+    outgoing.style.transform = '';
+    outgoing.style.opacity = '';
+    const img = outgoing.querySelector('img');
+    if (img) img.style.transform = '';
+  }, 250);
+  current = index;
+  updateViewerUI();
+  preloadAround(current);
+}
+
+function goNext() {
+  goTo(current + 1 < totalWithSep ? current + 1 : 0,  1);
+}
+function goPrev() {
+  goTo(current - 1 >= 0 ? current - 1 : totalWithSep - 1, -1);
+}
+
+document.getElementById('tap-prev').addEventListener('click', goPrev);
+document.getElementById('tap-next').addEventListener('click', goNext);
+
+document.addEventListener('keydown', e => {
+  if (!viewer.classList.contains('visible')) return;
+  if (e.key === 'ArrowRight') goNext();
+  if (e.key === 'ArrowLeft')  goPrev();
+  if (e.key === 'Escape')     closeViewer();
+});
+
+// ── Pinch / zoom ───────────────────────────────────────────────────────────
+const MIN_SCALE = 1.0, MAX_SCALE = 4.0;
+let scale = 1.0, panX = 0, panY = 0;
+
+function isZoomed() { return scale > 1.02; }
+
+function applyImageTransform(img) {
+  img.style.transform =
+    `scale(${scale}) translate(${panX / scale}px, ${panY / scale}px)`;
+}
+
+function resetZoom() {
+  scale = 1.0; panX = 0; panY = 0;
+  const img = slides[current] && slides[current].querySelector('img');
+  if (img) applyImageTransform(img);
+}
+
+function clampPan(s) {
+  const img = slides[current] && slides[current].querySelector('img');
+  if (!img) return;
+  const vw = slideContainer.clientWidth, vh = slideContainer.clientHeight;
+  const iw = img.naturalWidth || vw, ih = img.naturalHeight || vh;
+  const ratio = Math.min(vw / iw, vh / ih);
+  const maxPanX = Math.max(0, (iw * ratio * s - vw) / 2);
+  const maxPanY = Math.max(0, (ih * ratio * s - vh) / 2);
+  panX = Math.max(-maxPanX, Math.min(maxPanX, panX));
+  panY = Math.max(-maxPanY, Math.min(maxPanY, panY));
+}
+
+let isPinching = false, pinchStartDist = 0, pinchStartScale = 1;
+let panStartX = 0, panStartY = 0, panStartPX = 0, panStartPY = 0;
+
+function touchDist(t1, t2) {
+  return Math.sqrt(
+    (t1.clientX - t2.clientX) ** 2 + (t1.clientY - t2.clientY) ** 2);
+}
+
+slideContainer.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    isPinching = false;
+    panStartX = e.touches[0].clientX; panStartY = e.touches[0].clientY;
+    panStartPX = panX; panStartPY = panY;
+  } else if (e.touches.length === 2) {
+    isPinching = true;
+    pinchStartDist  = touchDist(e.touches[0], e.touches[1]);
+    pinchStartScale = scale;
+    panStartPX = panX; panStartPY = panY;
+  }
+}, { passive: true });
+
+slideContainer.addEventListener('touchmove', e => {
+  if (e.touches.length === 2) {
+    e.preventDefault();
+    isPinching = true;
+    scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE,
+      pinchStartScale *
+      (touchDist(e.touches[0], e.touches[1]) / pinchStartDist)));
+    clampPan(scale);
+    const img = slides[current].querySelector('img');
+    if (img) applyImageTransform(img);
+    return;
+  }
+  if (e.touches.length === 1 && isZoomed()) {
+    e.preventDefault();
+    panX = panStartPX + (e.touches[0].clientX - panStartX);
+    panY = panStartPY + (e.touches[0].clientY - panStartY);
+    clampPan(scale);
+    const img = slides[current].querySelector('img');
+    if (img) applyImageTransform(img);
+  }
+}, { passive: false });
+
+slideContainer.addEventListener('touchend', e => {
+  if (isPinching && e.touches.length === 0) {
+    isPinching = false;
+    if (scale < 1.05) resetZoom();
+  }
+});
+
+let lastTap = 0;
+slideContainer.addEventListener('touchend', e => {
+  if (e.changedTouches.length !== 1 || isPinching) return;
+  const now = Date.now();
+  if (now - lastTap < 300) {
+    if (isZoomed()) {
+      resetZoom();
+    } else {
+      scale = 2.5; panX = 0; panY = 0;
+      const img = slides[current].querySelector('img');
+      if (img) applyImageTransform(img);
+    }
+    lastTap = 0;
+  } else {
+    lastTap = now;
+  }
+});
+
+// ── Initialise ─────────────────────────────────────────────────────────────
+updateViewerUI();
+
+// ── Live update — check for new images every 60 seconds ───────────────────
+const REFRESH_INTERVAL = 60000;  // ms
+const _apiBase = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${RALLY_FOLDER}/${STAGE_NAME_API}/photos.html`;
+
+// Known filenames — start with what was injected at upload time
+const knownImages = new Set(IMAGES);
+
+function _showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function _resetCountdownBar() {
+  const bar = document.getElementById('countdown-bar');
+  // Force reflow to restart CSS animation
+  bar.style.animation = 'none';
+  bar.offsetHeight;
+  bar.style.animation = '';
+}
+
+function _appendNewImages(newFilenames) {
+  newFilenames.forEach(filename => {
+    const index = IMAGES.length;
+    IMAGES.push(filename);
+    knownImages.add(filename);
+
+    // Add viewer slide — load src immediately (not lazy) since we're
+    // appending live and preloadAround won't pick these up automatically
+    const div = document.createElement('div');
+    div.className = 'slide';
+    const loader = document.createElement('div');
+    loader.className = 'loader';
+    div.appendChild(loader);
+    const img = document.createElement('img');
+    img.src    = imgSrc(filename);   // set src directly, not dataset.src
+    img.onload  = () => { if (loader.parentNode) loader.remove(); };
+    img.onerror = () => { if (loader.parentNode) loader.remove(); };
+    div.appendChild(img);
+    slideContainer.appendChild(div);
+    slides.push(div);
+
+    // Add thumbnail cell
+    const isSep = isSeparator(filename);
+    const cell  = document.createElement('div');
+    cell.className = isSep ? 'thumb-cell is-separator' : 'thumb-cell';
+
+    if (!isSep) {
+      const loaderWrap = document.createElement('div');
+      loaderWrap.className = 'thumb-loader';
+      const ring = document.createElement('div');
+      ring.className = 'thumb-loader-ring';
+      loaderWrap.appendChild(ring);
+      cell.appendChild(loaderWrap);
+      const timg = document.createElement('img');
+      timg.src = imgSrc(filename);
+      timg.onload  = () => { timg.classList.add('loaded'); loaderWrap.remove(); };
+      timg.onerror = () => loaderWrap.remove();
+      cell.appendChild(timg);
+      realIndexInGrid++;
+      const badge = document.createElement('div');
+      badge.className = 'thumb-badge';
+      badge.textContent = realIndexInGrid;
+      cell.appendChild(badge);
+      cell.addEventListener('click', () => openViewer(index));
+    } else {
+      const loaderWrap = document.createElement('div');
+      loaderWrap.className = 'thumb-loader';
+      const ring = document.createElement('div');
+      ring.className = 'thumb-loader-ring';
+      loaderWrap.appendChild(ring);
+      cell.appendChild(loaderWrap);
+      const timg = document.createElement('img');
+      timg.src = imgSrc(filename);
+      timg.onload  = () => { timg.classList.add('loaded'); loaderWrap.remove(); };
+      timg.onerror = () => loaderWrap.remove();
+      cell.appendChild(timg);
+    }
+    gridEl.appendChild(cell);
+  });
+
+  // Update counts
+  const newRealCount = IMAGES.filter(f => !isSeparator(f)).length;
+  document.getElementById('grid-count').textContent = `${newRealCount} images`;
+
+  // Rebuild realImageNumber map
+  let n = 0;
+  IMAGES.forEach((f, i) => { realImageNumber[i] = isSeparator(f) ? null : ++n; });
+}
+
+async function checkForUpdates() {
+  // Don't fetch if page is hidden (smart refresh)
+  if (document.hidden) {
+    _resetCountdownBar();
+    return;
+  }
+
+  try {
+    const r = await fetch(_apiBase, {
+      headers: _ghHeaders()
+    });
+
+    if (r.status === 403) {
+      const remaining = r.headers.get('X-RateLimit-Remaining');
+      if (remaining === '0') {
+        const reset = r.headers.get('X-RateLimit-Reset');
+        const resetTime = reset
+          ? new Date(parseInt(reset) * 1000).toLocaleTimeString()
+          : 'shortly';
+        _showToast(`Rate limit reached — resets ${resetTime}`);
+        _resetCountdownBar();
+        return;
+      }
+    }
+
+    if (!r.ok) { _resetCountdownBar(); return; }
+
+    const apiData  = await r.json();
+    const html     = atob(apiData.content.replace(/\n/g, ''));
+    const match    = html.match(/const\s+IMAGES\s*=\s*\[(.*?)\];/s);
+    if (!match) { _resetCountdownBar(); return; }
+
+    const latestImages = [...html.matchAll(/"([^"]+)"/g)].map(m => m[1])
+      .filter((_, idx) => {
+        // Re-extract just the filenames from inside the array match
+        return true;
+      });
+
+    // Re-parse more carefully
+    const arrayContent = match[1];
+    const latestList   = [...arrayContent.matchAll(/"([^"]+)"/g)].map(m => m[1]);
+    const newOnes      = latestList.filter(f => !knownImages.has(f));
+
+    if (newOnes.length > 0) {
+      const newRealCount = newOnes.filter(f => !isSeparator(f)).length;
+      _appendNewImages(newOnes);
+      if (newRealCount > 0) {
+        _showToast(`+${newRealCount} new image${newRealCount > 1 ? 's' : ''}`);
+      }
+    }
+
+  } catch (e) {
+    // Silent fail — just reset the bar and try again next cycle
+  }
+
+  _resetCountdownBar();
+}
+
+// Start the countdown and kick off periodic checks
+_resetCountdownBar();
+setInterval(checkForUpdates, REFRESH_INTERVAL);
+
+// Pause/resume when page visibility changes
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    // Page just became visible — check immediately then reset bar
+    checkForUpdates();
+  }
+});
+
+</script>
+</body>
+</html>
