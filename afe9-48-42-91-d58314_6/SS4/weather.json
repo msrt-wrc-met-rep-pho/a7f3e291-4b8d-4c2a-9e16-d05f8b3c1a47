@@ -1,5 +1,19 @@
 [
   {
+    "uploaded_at": "10:12:59",
+    "time": "0936",
+    "box": "Box1(0.00km) -515m",
+    "ground_shade": 18.0,
+    "ground_sun": 20.5,
+    "air_shade": 17.9,
+    "road": "Dry",
+    "weather": "Dry",
+    "cloud": "None",
+    "visibility": "Good",
+    "wind": "None",
+    "comments": "sun has just broken over the ridge, so temp should rise now"
+  },
+  {
     "uploaded_at": "07:15:56",
     "time": "0710",
     "box": "Box 11(17.87km)",
