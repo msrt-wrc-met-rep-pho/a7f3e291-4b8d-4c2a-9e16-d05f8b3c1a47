@@ -1085,6 +1085,7 @@ async function renderStages(data) {
 
   if (dataChanged) {
     await buildRallyRow(data);
+    _applyToggleUI();
 
     const list = document.getElementById('stage-list');
     list.innerHTML = '';
