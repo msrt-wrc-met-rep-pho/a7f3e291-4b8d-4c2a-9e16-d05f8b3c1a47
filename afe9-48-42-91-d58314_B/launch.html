@@ -256,7 +256,6 @@ html, body {
 
 /* ── Crew mode card ───────────────────────────────────────────────────────── */
 .crew-card {
-  grid-column: 2 / -1;
   border-radius: var(--radius);
   display: flex;
   align-items: center;
@@ -759,13 +758,18 @@ function _rncIcon(live) {
 let _viewMode = localStorage.getItem('stagehand_view') || 'full';
 
 function _applyToggleUI() {
-  document.getElementById('toggle-full').classList.toggle('active', _viewMode === 'full');
-  document.getElementById('toggle-crew').classList.toggle('active', _viewMode === 'crew');
+  const isFull = _viewMode === 'full';
+  document.getElementById('toggle-full').classList.toggle('active', isFull);
+  document.getElementById('toggle-crew').classList.toggle('active', !isFull);
   const rallyRow = document.getElementById('rally-row');
   const rallyDivider = document.querySelector('.rally-section-divider');
-  const show = _viewMode === 'full';
-  if (rallyRow)     rallyRow.style.display     = show ? '' : 'none';
-  if (rallyDivider) rallyDivider.style.display = show ? '' : 'none';
+  if (rallyRow)     rallyRow.style.display     = isFull ? '' : 'none';
+  if (rallyDivider) rallyDivider.style.display = isFull ? '' : 'none';
+  // Switch grid columns based on mode
+  const stageList = document.getElementById('stage-list');
+  if (stageList) {
+    stageList.style.gridTemplateColumns = isFull ? '52px 1fr 1fr 1fr' : '52px 1fr';
+  }
 }
 
 document.getElementById('view-toggle').addEventListener('click', async () => {
@@ -841,10 +845,6 @@ function _cardState(count, seenCount) {
 }
 
 function buildRow(key, info, list) {
-  const hasPhotos  = info.count  > 0;
-  const hasWeather = info.weather_count > 0;
-  const isAnyLive  = hasPhotos || hasWeather;
-
   if (info.divider_above === true) {
     const divider = document.createElement('div');
     divider.className = 'stage-divider';
@@ -854,9 +854,11 @@ function buildRow(key, info, list) {
   const row = document.createElement('div');
   row.className = 'stage-row';
 
-  // Stage label — ID on top, description below
+  // ── Stage label ──────────────────────────────────────────────────────────
+  const hasPhotos  = info.count > 0;
+  const hasWeather = info.weather_count > 0;
   const label = document.createElement('div');
-  label.className = 'stage-label' + (isAnyLive ? ' live' : '');
+  label.className = 'stage-label';
   const idSpan = document.createElement('div');
   idSpan.className = 'stage-label-id';
   idSpan.textContent = key;
@@ -867,9 +869,8 @@ function buildRow(key, info, list) {
   label.appendChild(descSpan);
   row.appendChild(label);
 
-  // ── Photo icon card ──────────────────────────────────────────────────────
   if (_viewMode === 'crew') {
-    // Crew mode — single wide card with weather summary
+    // ── Crew mode — one wide card with weather summary ─────────────────────
     const crewState = _cardState(info.count, _seenCount('photos', key));
     const crewCard = document.createElement('div');
     crewCard.className = 'crew-card ' + (crewState === 'empty' ? 'empty' : 'live');
@@ -888,17 +889,17 @@ function buildRow(key, info, list) {
       });
     }
     row.appendChild(crewCard);
+
   } else {
+    // ── Full mode — photo, weather, RNC cards ──────────────────────────────
     const photoState = _cardState(info.count, _seenCount('photos', key));
     const photoCard = document.createElement('div');
     photoCard.className = 'icon-card ' + photoState;
     photoCard.appendChild(_photoIcon());
-
     const photoLabel = document.createElement('div');
     photoLabel.className = 'icon-label';
-    photoLabel.textContent = info.count > 0 ? `${info.count}` : '0';
+    photoLabel.textContent = `${info.count || 0}`;
     photoCard.appendChild(photoLabel);
-
     if (photoState !== 'empty') {
       photoCard.addEventListener('click', () => {
         window.location.href = `${key}/photos.html`;
@@ -906,68 +907,55 @@ function buildRow(key, info, list) {
     }
     row.appendChild(photoCard);
 
-  // ── Weather icon card ────────────────────────────────────────────────────
-  } // end full mode photo card
-
-  if (_viewMode === 'full') {
-  const wxState = _cardState(info.weather_count, _seenCount('weather', key));
-  const wxCard = document.createElement('div');
-  wxCard.className = 'icon-card ' + wxState;
-  wxCard.appendChild(_weatherIcon());
-
-  const wxLabel = document.createElement('div');
-  wxLabel.className = 'icon-label';
-  wxLabel.textContent = info.weather_count > 0 ? `${info.weather_count}` : '0';
-  wxCard.appendChild(wxLabel);
-
-  if (wxState !== 'empty') {
-    wxCard.addEventListener('click', () => {
-      window.location.href = `${key}/weather.html`;
-    });
-  }
-  row.appendChild(wxCard);
-
-  // ── RNC icon card ─────────────────────────────────────────────────────────
-  const rncCount     = info.rnc_count || 0;
-  const showRncIcon  = info.has_rnc_icon === true;
-  const rncState     = _cardState(rncCount, _seenCount('rnc', key));
-
-  const rncCard = document.createElement('div');
-  if (showRncIcon) {
-    rncCard.className = 'icon-card ' + rncState;
-    rncCard.appendChild(_rncIcon(rncState === 'live'));
-
-    const rncLabel = document.createElement('div');
-    rncLabel.className = 'icon-label';
-    rncLabel.textContent = `${rncCount}`;
-    rncCard.appendChild(rncLabel);
-
-    if (rncState !== 'empty') {
-      rncCard.addEventListener('click', () => {
-        window.location.href = `${key}/rnc.html`;
+    const wxState = _cardState(info.weather_count, _seenCount('weather', key));
+    const wxCard = document.createElement('div');
+    wxCard.className = 'icon-card ' + wxState;
+    wxCard.appendChild(_weatherIcon());
+    const wxLabel = document.createElement('div');
+    wxLabel.className = 'icon-label';
+    wxLabel.textContent = `${info.weather_count || 0}`;
+    wxCard.appendChild(wxLabel);
+    if (wxState !== 'empty') {
+      wxCard.addEventListener('click', () => {
+        window.location.href = `${key}/weather.html`;
       });
     }
-  } else {
-    // No RNC for this stage — empty placeholder to keep layout consistent
-    rncCard.className = 'icon-card empty';
-    rncCard.style.visibility = 'hidden';
-  }
+    row.appendChild(wxCard);
 
-  // Apply RNC row span
-  const rncSpan = info.rnc_span !== undefined ? info.rnc_span : 1;
-  if (rncSpan === 0) {
-    // No cell — skip entirely, handled by a spanning cell above
-  } else if (rncSpan > 1) {
-    rncCard.style.gridRow = `span ${rncSpan}`;
-    rncCard.style.alignSelf = 'stretch';
-    rncCard.style.height = 'auto';
-  }
+    const rncCount   = info.rnc_count || 0;
+    const rncState   = _cardState(rncCount, _seenCount('rnc', key));
+    const rncSpan    = info.rnc_span !== undefined ? info.rnc_span : 1;
+    const showRnc    = info.has_rnc_icon === true;
+    const rncCard    = document.createElement('div');
 
-  if (rncSpan !== 0) {
-    row.appendChild(rncCard);
-  }
+    if (showRnc) {
+      rncCard.className = 'icon-card ' + rncState;
+      rncCard.appendChild(_rncIcon(rncState === 'live'));
+      const rncLabel = document.createElement('div');
+      rncLabel.className = 'icon-label';
+      rncLabel.textContent = `${rncCount}`;
+      rncCard.appendChild(rncLabel);
+      if (rncState !== 'empty') {
+        rncCard.addEventListener('click', () => {
+          window.location.href = `${key}/rnc.html`;
+        });
+      }
+    } else {
+      rncCard.className = 'icon-card empty';
+      rncCard.style.visibility = 'hidden';
+    }
 
-  } // end full mode
+    if (rncSpan === 0) {
+      // No cell — skip
+    } else {
+      if (rncSpan > 1) {
+        rncCard.style.gridRow = `span ${rncSpan}`;
+        rncCard.style.alignSelf = 'stretch';
+        rncCard.style.height = 'auto';
+      }
+      row.appendChild(rncCard);
+    }
+  }
 
   return row;
 }
