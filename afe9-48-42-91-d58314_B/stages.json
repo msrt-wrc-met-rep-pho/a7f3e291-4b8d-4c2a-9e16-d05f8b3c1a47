@@ -9,9 +9,13 @@
       "divider_above": false,
       "rnc_span": 1,
       "count": 1,
-      "weather_count": 0,
+      "weather_count": 1,
       "rnc_count": 0,
-      "latest_weather": {}
+      "latest_weather": {
+        "box": "Box 24(18.02km) +200",
+        "ground_shade": 14.3,
+        "air_shade": 13.5
+      }
     },
     "SSS1": {
       "label": "Start",
