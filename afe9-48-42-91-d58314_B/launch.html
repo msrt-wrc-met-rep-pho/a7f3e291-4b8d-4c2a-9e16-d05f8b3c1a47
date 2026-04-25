@@ -768,10 +768,12 @@ function _applyToggleUI() {
   if (rallyDivider) rallyDivider.style.display = show ? '' : 'none';
 }
 
-document.getElementById('view-toggle').addEventListener('click', () => {
+document.getElementById('view-toggle').addEventListener('click', async () => {
   _viewMode = _viewMode === 'full' ? 'crew' : 'full';
   localStorage.setItem('stagehand_view', _viewMode);
   _applyToggleUI();
+  // Wait for any in-progress render to finish
+  while (_rendering) await new Promise(r => setTimeout(r, 50));
   // Force rebuild by clearing cached data hash
   _lastDataJson = '';
   // Re-render stages with new mode
@@ -1074,30 +1076,37 @@ async function buildRallyRow(data) {
 }
 
 let _lastDataJson = '';
+let _rendering = false;
 
 async function renderStages(data) {
-  const dataJson = JSON.stringify(data);
+  if (_rendering) return;
+  _rendering = true;
+  try {
+    const dataJson = JSON.stringify(data);
 
-  document.getElementById('rally-name').textContent = data.rally;
-  document.title = data.rally;
+    document.getElementById('rally-name').textContent = data.rally;
+    document.title = data.rally;
 
-  // Only rebuild DOM if data has changed
-  const dataChanged = dataJson !== _lastDataJson;
-  _lastDataJson = dataJson;
+    // Only rebuild DOM if data has changed
+    const dataChanged = dataJson !== _lastDataJson;
+    _lastDataJson = dataJson;
 
-  if (dataChanged) {
-    await buildRallyRow(data);
-    _applyToggleUI();
+    if (dataChanged) {
+      await buildRallyRow(data);
+      _applyToggleUI();
 
-    const list = document.getElementById('stage-list');
-    list.innerHTML = '';
+      const list = document.getElementById('stage-list');
+      list.innerHTML = '';
 
-    const stageKeys = Object.keys(data.stages);
+      const stageKeys = Object.keys(data.stages);
 
-    list._lastData = data;
-    stageKeys.forEach(key => {
-      list.appendChild(buildRow(key, data.stages[key], list));
-    });
+      list._lastData = data;
+      stageKeys.forEach(key => {
+        list.appendChild(buildRow(key, data.stages[key], list));
+      });
+    }
+  } finally {
+    _rendering = false;
   }
 }
 
