@@ -75,9 +75,16 @@
       "divider_above": true,
       "rnc_span": 1,
       "count": 0,
-      "weather_count": 0,
+      "weather_count": 1,
       "rnc_count": 0,
-      "latest_weather": {}
+      "latest_weather": {
+        "box": "Box 6(4.79km)",
+        "ground_shade": 15.2,
+        "air_shade": 13.2,
+        "road": "Humid",
+        "weather": "Humid",
+        "visibility": "Good"
+      }
     },
     "SS5": {
       "label": "6.39km",
