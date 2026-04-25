@@ -321,7 +321,7 @@ html, body {
   background: var(--accent);
   border-radius: 0 0 2px 2px;
   transform-origin: left center;
-  animation: countdown 30s linear forwards;
+  animation: countdown 60s linear forwards;
 }
 
 @keyframes countdown {
@@ -1131,7 +1131,7 @@ async function checkForUpdates() {
 }
 
 resetCountdownBar();
-setInterval(checkForUpdates, 30000);
+setInterval(checkForUpdates, 60000);
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) checkForUpdates();
