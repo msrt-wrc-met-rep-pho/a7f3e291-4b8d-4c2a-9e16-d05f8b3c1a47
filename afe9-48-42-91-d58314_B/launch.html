@@ -286,7 +286,7 @@ html, body {
 }
 
 .crew-card.live  .crew-card-text { color: var(--accent); }
-.crew-card.empty .crew-card-text { color: #bbb; }
+.crew-card.empty .crew-card-text { color: #ddd; }
 
 /* ── Toolbar ─────────────────────────────────────────────────────────────── */
 #toolbar {
@@ -397,7 +397,7 @@ html, body {
   text-transform: uppercase;
 }
 .rally-card.live  .rally-card-label { color: var(--accent); }
-.rally-card.empty .rally-card-label { color: #bbb; }
+.rally-card.empty .rally-card-label { color: #ddd; }
 
 .rally-card-count {
   font-size: 10px;
@@ -514,7 +514,7 @@ html, body {
 }
 
 .icon-card.live  svg { stroke: var(--accent); }
-.icon-card.empty svg { stroke: #bbb; }
+.icon-card.empty svg { stroke: #ddd; }
 
 /* Sub-label below icon */
 .icon-label {
@@ -525,7 +525,7 @@ html, body {
 }
 
 .icon-card.live  .icon-label { color: rgba(232,200,64,0.7); }
-.icon-card.empty .icon-label { color: #bbb; }
+.icon-card.empty .icon-label { color: #ddd; }
 
 /* ── Loading / error ─────────────────────────────────────────────────────── */
 #status {
@@ -737,7 +737,7 @@ function _rncIcon(live) {
   svg.setAttribute("viewBox", "0 0 139 60");
   svg.style.width = "42px";
   svg.style.height = "18px";
-  const col = live ? "#e8c840" : "#bbb";
+  const col = live ? "#e8c840" : "#ddd";
   const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
   g.setAttribute("transform", "translate(0,60) scale(0.1,-0.1)");
   g.setAttribute("fill", col);
