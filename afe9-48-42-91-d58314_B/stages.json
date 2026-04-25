@@ -126,13 +126,13 @@
       "divider_above": false,
       "rnc_span": 0,
       "count": 0,
-      "weather_count": 1,
+      "weather_count": 2,
       "rnc_count": 0,
       "latest_weather": {
         "box": "Box 6(4.79km)",
-        "ground_shade": 15.2,
-        "air_shade": 16.1,
-        "road": "Partly Wet",
+        "ground_shade": 16.7,
+        "air_shade": 17.3,
+        "road": "Dry",
         "weather": "Humid",
         "visibility": "Good"
       }
