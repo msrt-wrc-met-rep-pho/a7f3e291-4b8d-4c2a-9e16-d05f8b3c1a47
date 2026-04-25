@@ -37,9 +37,17 @@
       "divider_above": true,
       "rnc_span": 1,
       "count": 0,
-      "weather_count": 0,
+      "weather_count": 1,
       "rnc_count": 0,
-      "latest_weather": {}
+      "latest_weather": {
+        "box": "Box 24(18.02km)",
+        "ground_shade": 18.7,
+        "ground_sun": 21.7,
+        "air_shade": 17.6,
+        "road": "Dry",
+        "weather": "Dry",
+        "visibility": "Good"
+      }
     },
     "SS3A": {
       "label": "5.82km",
