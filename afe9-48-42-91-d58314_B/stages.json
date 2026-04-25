@@ -1,0 +1,257 @@
+{
+  "rally": "Rally Canarias 2026 V2.1",
+  "forecast_count": 0,
+  "latest_forecast": "",
+  "stages": {
+    "SD": {
+      "label": "5.5km",
+      "has_rnc_icon": true,
+      "divider_above": false,
+      "rnc_span": 1,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SSS1": {
+      "label": "Start",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 1,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS2": {
+      "label": "6.39km",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 1,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS3A": {
+      "label": "5.82km",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 2,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS3B": {
+      "label": "15.0km",
+      "has_rnc_icon": false,
+      "divider_above": false,
+      "rnc_span": 0,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS4": {
+      "label": "17.1km",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 1,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS5": {
+      "label": "6.39km",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 1,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS6A": {
+      "label": "5.82km",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 2,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS6B": {
+      "label": "15.0km",
+      "has_rnc_icon": false,
+      "divider_above": false,
+      "rnc_span": 0,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS7": {
+      "label": "17.1km",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 1,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SSS8": {
+      "label": "Start",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 1,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS9": {
+      "label": "Finish",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 1,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS10": {
+      "label": "13.74km",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 1,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS11": {
+      "label": "28.9km",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 1,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS12": {
+      "label": "Finish",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 1,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS13": {
+      "label": "13.74km",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 1,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS14": {
+      "label": "28.9km",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 1,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS15A": {
+      "label": "8.0km",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 2,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS15B": {
+      "label": "18.1km",
+      "has_rnc_icon": false,
+      "divider_above": false,
+      "rnc_span": 0,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS16A": {
+      "label": "Start",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 2,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS16B": {
+      "label": "10.1km",
+      "has_rnc_icon": false,
+      "divider_above": false,
+      "rnc_span": 0,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS17A": {
+      "label": "8.0km",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 2,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS17B": {
+      "label": "18.1km",
+      "has_rnc_icon": false,
+      "divider_above": false,
+      "rnc_span": 0,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS18A": {
+      "label": "Start",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 2,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    },
+    "SS18B": {
+      "label": "10.1km",
+      "has_rnc_icon": false,
+      "divider_above": false,
+      "rnc_span": 0,
+      "count": 0,
+      "weather_count": 0,
+      "rnc_count": 0,
+      "latest_weather": {}
+    }
+  }
+}
