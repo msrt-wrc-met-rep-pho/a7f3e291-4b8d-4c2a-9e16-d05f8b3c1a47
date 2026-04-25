@@ -12,5 +12,18 @@
     "visibility": "Good",
     "wind": "Light",
     "comments": "patchy high white with blue sky at the moment. sky not visible to the North at my location"
+  },
+  {
+    "uploaded_at": "20:16:31",
+    "time": "1501",
+    "box": "Box 6(4.79km)",
+    "ground_shade": 16.7,
+    "air_shade": 17.3,
+    "road": "Dry",
+    "weather": "Humid",
+    "cloud": "Medium Grey",
+    "visibility": "Good",
+    "wind": "None",
+    "comments": "None"
   }
 ]
