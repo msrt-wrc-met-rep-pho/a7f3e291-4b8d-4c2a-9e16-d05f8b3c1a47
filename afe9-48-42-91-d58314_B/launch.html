@@ -841,14 +841,19 @@ function buildRow(key, info, list) {
   // ── Photo icon card ──────────────────────────────────────────────────────
   if (_viewMode === 'crew') {
     // Crew mode — single wide card with weather summary
-    const hasPhotos = info.count > 0;
+    const crewState = _cardState(info.count, _seenCount('photos', key));
     const crewCard = document.createElement('div');
-    crewCard.className = 'crew-card ' + (hasPhotos ? 'live' : 'empty');
+    crewCard.className = 'crew-card ' + (crewState === 'empty' ? 'empty' : 'live');
+    if (crewState === 'seen') {
+      crewCard.style.background = '#0d1f0d';
+      crewCard.style.borderColor = '#4caf50';
+    }
     const crewText = document.createElement('div');
     crewText.className = 'crew-card-text';
+    if (crewState === 'seen') crewText.style.color = '#4caf50';
     crewText.textContent = _crewWeatherSummary(info);
     crewCard.appendChild(crewText);
-    if (hasPhotos) {
+    if (crewState !== 'empty') {
       crewCard.addEventListener('click', () => {
         window.location.href = `${key}/photos.html`;
       });
