@@ -772,6 +772,8 @@ document.getElementById('view-toggle').addEventListener('click', () => {
   _viewMode = _viewMode === 'full' ? 'crew' : 'full';
   localStorage.setItem('stagehand_view', _viewMode);
   _applyToggleUI();
+  // Force rebuild by clearing cached data hash
+  _lastDataJson = '';
   // Re-render stages with new mode
   const list = document.getElementById('stage-list');
   if (list._lastData) renderStages(list._lastData);
