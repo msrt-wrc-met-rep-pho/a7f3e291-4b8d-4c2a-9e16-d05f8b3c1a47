@@ -1083,9 +1083,9 @@ async function renderStages(data) {
   const dataChanged = dataJson !== _lastDataJson;
   _lastDataJson = dataJson;
 
-  await buildRallyRow(data);
-
   if (dataChanged) {
+    await buildRallyRow(data);
+
     const list = document.getElementById('stage-list');
     list.innerHTML = '';
 
