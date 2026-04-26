@@ -153,34 +153,36 @@ html, body {
 }
 .note-card:active { opacity: 0.85; }
 
-/* Video / image thumbnail */
-.note-thumb {
-  width: 100%;
-  height: 90px;
-  object-fit: contain;
-  flex-shrink: 0;
-  display: block;
-  background: #000;
-}
-
-/* Card text area */
-.note-text-area {
-  padding: 6px 8px;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
+/* Type label strip — always at top */
 .note-type-label {
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--accent);
+  padding: 5px 8px 3px;
   flex-shrink: 0;
-  margin-bottom: 2px;
+  background: var(--card-bg);
+}
+
+/* Video / image thumbnail */
+.note-thumb {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  object-fit: contain;
+  display: block;
+  background: #000;
+}
+
+/* Card text area */
+.note-text-area {
+  padding: 4px 8px 6px;
+  flex-shrink: 0;
+  height: 52px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .note-body {
@@ -195,10 +197,11 @@ html, body {
   white-space: pre-wrap;
 }
 
-/* Text-only card — no thumbnail, more text space */
+/* Text-only card — no thumbnail, label + body fills full card */
 .note-card.text-only .note-text-area {
-  padding: 10px;
-  justify-content: center;
+  height: auto;
+  flex: 1;
+  padding: 4px 8px 8px;
 }
 .note-card.text-only .note-body {
   -webkit-line-clamp: 6;
@@ -356,6 +359,14 @@ const NOTES_DATA = [
     "filename": "msport_logo.png",
     "text": "Test image",
     "created_at": "10:09:28"
+  },
+  {
+    "type": "video",
+    "video_id": "g36kohwrL0E",
+    "url": "https://www.youtube.com/watch?v=g36kohwrL0E",
+    "thumbnail": "https://img.youtube.com/vi/g36kohwrL0E/mqdefault.jpg",
+    "text": "testing new card layout for videos",
+    "created_at": "10:38:41"
   }
 ];
 
@@ -425,60 +436,50 @@ function renderAll(data) {
   data.forEach(note => {
     const card = document.createElement('div');
 
+    function _typeLabel(text) {
+      const el = document.createElement('div');
+      el.className = 'note-type-label';
+      el.textContent = text;
+      return el;
+    }
+    function _textArea(text, clamp) {
+      const area = document.createElement('div');
+      area.className = 'note-text-area';
+      const body = document.createElement('div');
+      body.className = 'note-body';
+      if (clamp) body.style.webkitLineClamp = clamp;
+      body.textContent = text || '';
+      area.appendChild(body);
+      return area;
+    }
+
     if (note.type === 'video') {
       card.className = 'note-card';
+      card.appendChild(_typeLabel('Video'));
       const thumb = document.createElement('img');
       thumb.className = 'note-thumb';
       thumb.src = note.thumbnail;
       thumb.alt = 'Video thumbnail';
       card.appendChild(thumb);
-      const area = document.createElement('div');
-      area.className = 'note-text-area';
-      const typeLabel = document.createElement('div');
-      typeLabel.className = 'note-type-label';
-      typeLabel.textContent = 'Video';
-      area.appendChild(typeLabel);
-      const body = document.createElement('div');
-      body.className = 'note-body';
-      body.textContent = note.text || '';
-      area.appendChild(body);
-      card.appendChild(area);
+      card.appendChild(_textArea(note.text));
       card.addEventListener('click', () => window.open(note.url, '_blank'));
 
     } else if (note.type === 'image') {
       card.className = 'note-card';
+      card.appendChild(_typeLabel('Image'));
       const src = _imgUrl(note.filename);
       const img = document.createElement('img');
       img.className = 'note-thumb';
       img.src = src;
       img.alt = note.text || '';
       card.appendChild(img);
-      const area = document.createElement('div');
-      area.className = 'note-text-area';
-      const typeLabel = document.createElement('div');
-      typeLabel.className = 'note-type-label';
-      typeLabel.textContent = 'Image';
-      area.appendChild(typeLabel);
-      const body = document.createElement('div');
-      body.className = 'note-body';
-      body.textContent = note.text || '';
-      area.appendChild(body);
-      card.appendChild(area);
+      card.appendChild(_textArea(note.text));
       card.addEventListener('click', () => _showOverlay(src));
 
     } else if (note.type === 'text') {
       card.className = 'note-card text-only';
-      const area = document.createElement('div');
-      area.className = 'note-text-area';
-      const typeLabel = document.createElement('div');
-      typeLabel.className = 'note-type-label';
-      typeLabel.textContent = 'Note';
-      area.appendChild(typeLabel);
-      const body = document.createElement('div');
-      body.className = 'note-body';
-      body.textContent = note.text || '';
-      area.appendChild(body);
-      card.appendChild(area);
+      card.appendChild(_typeLabel('Note'));
+      card.appendChild(_textArea(note.text, 6));
       card.addEventListener('click', () => _showTextModal(note.text));
     }
 
