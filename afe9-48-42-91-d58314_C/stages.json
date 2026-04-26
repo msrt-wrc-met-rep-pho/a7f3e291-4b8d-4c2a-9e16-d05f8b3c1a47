@@ -1,7 +1,7 @@
 {
   "rally": "Rally Canarias 2026 - v3.0",
-  "forecast_count": 0,
-  "latest_forecast": "",
+  "forecast_count": 2,
+  "latest_forecast": "Rally Canaries 2026 Weather Forecast V2.pdf",
   "stages": {
     "SD": {
       "label": "5.5km",
