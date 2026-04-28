@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<!-- last updated: 26/04/2026 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StageHand — Stats</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:      #0a0a0a;
+  --surface: #141414;
+  --border:  #222;
+  --accent:  #e8c840;
+  --green:   #4caf50;
+  --blue:    #64b5f6;
+  --text:    #eee;
+  --sub:     #666;
+  --radius:  10px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+/* ── PIN screen ──────────────────────────────────────────────────────────── */
+#pin-screen {
+  position: fixed; inset: 0;
+  background: #000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 200; gap: 20px;
+}
+#pin-screen.hidden { display: none; }
+#pin-title { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+#pin-dots { display: flex; gap: 14px; }
+.pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #444; background: transparent; transition: background 0.15s, border-color 0.15s; }
+.pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+.pin-dot.error  { background: #e74c3c; border-color: #e74c3c; }
+#pin-keypad { display: grid; grid-template-columns: repeat(3, 68px); grid-template-rows: repeat(4, 56px); gap: 10px; }
+.pin-key { border-radius: 10px; border: 1.5px solid #2a2a2a; background: #1a1a1a; color: #fff; font-size: 20px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; transition: background 0.1s; }
+.pin-key:active { background: #2a2a2a; }
+.pin-key.del { font-size: 14px; color: #888; }
+.pin-key.empty { border-color: transparent; background: transparent; pointer-events: none; }
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+#header {
+  background: #000;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+#header-title { font-size: 16px; font-weight: 800; letter-spacing: 0.08em; color: var(--accent); }
+#header-rally { font-size: 12px; color: var(--sub); }
+#refresh-btn {
+  background: #1a1a1a; border: 1px solid var(--border); border-radius: 8px;
+  color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  padding: 6px 14px; cursor: pointer;
+}
+#refresh-btn:active { background: #222; }
+
+/* ── Loading ─────────────────────────────────────────────────────────────── */
+#loading {
+  text-align: center; color: var(--sub); font-size: 14px;
+  padding: 60px 20px;
+}
+
+/* ── Dashboard ───────────────────────────────────────────────────────────── */
+#dashboard { display: none; padding: 16px; max-width: 900px; margin: 0 auto; }
+
+/* ── Summary cards ───────────────────────────────────────────────────────── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.summary-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.summary-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+/* ── Section headers ─────────────────────────────────────────────────────── */
+.section-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin: 20px 0 10px;
+}
+
+/* ── Bar charts ──────────────────────────────────────────────────────────── */
+.bar-list { display: flex; flex-direction: column; gap: 6px; }
+.bar-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 40px;
+  align-items: center;
+  gap: 8px;
+}
+.bar-label { font-size: 11px; color: var(--text); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { background: #1a1a1a; border-radius: 4px; height: 18px; overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+.bar-count { font-size: 11px; color: var(--sub); text-align: right; }
+
+/* ── Activity by hour ────────────────────────────────────────────────────── */
+.hour-grid {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 2px;
+  align-items: end;
+  height: 60px;
+  margin-bottom: 4px;
+}
+.hour-bar {
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  cursor: default;
+}
+.hour-bar:hover { opacity: 1; }
+.hour-labels {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 2px;
+}
+.hour-label { font-size: 8px; color: var(--sub); text-align: center; }
+
+/* ── Event feed ──────────────────────────────────────────────────────────── */
+.event-feed {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.event-row {
+  display: grid;
+  grid-template-columns: 140px 120px 1fr;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  align-items: center;
+}
+.event-row:last-child { border-bottom: none; }
+.event-time  { color: var(--sub); font-variant-numeric: tabular-nums; }
+.event-type  { color: var(--accent); font-weight: 700; letter-spacing: 0.04em; }
+.event-extra { color: var(--text); }
+
+/* ── Two col layout ──────────────────────────────────────────────────────── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+
+.chart-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+</style>
+</head>
+<body>
+
+<div id="pin-screen">
+  <div id="pin-title">Stats PIN</div>
+  <div id="pin-dots">
+    <div class="pin-dot" id="dot-0"></div>
+    <div class="pin-dot" id="dot-1"></div>
+    <div class="pin-dot" id="dot-2"></div>
+    <div class="pin-dot" id="dot-3"></div>
+  </div>
+  <div id="pin-keypad">
+    <div class="pin-key" data-v="1">1</div><div class="pin-key" data-v="2">2</div><div class="pin-key" data-v="3">3</div>
+    <div class="pin-key" data-v="4">4</div><div class="pin-key" data-v="5">5</div><div class="pin-key" data-v="6">6</div>
+    <div class="pin-key" data-v="7">7</div><div class="pin-key" data-v="8">8</div><div class="pin-key" data-v="9">9</div>
+    <div class="pin-key empty"></div><div class="pin-key" data-v="0">0</div><div class="pin-key del" data-v="del">⌫</div>
+  </div>
+</div>
+
+<div id="header">
+  <div>
+    <div id="header-title">STAGEHAND — STATS</div>
+    <div id="header-rally"></div>
+  </div>
+  <button id="refresh-btn">REFRESH</button>
+</div>
+
+<div id="loading">Loading stats...</div>
+<div id="dashboard"></div>
+
+<script>
+
+const _STATS_PIN_HASH  = "b72653265c6bad2943d9235c8725b57920e6e5e1ff76165410094e7ae3c9bb99";
+const _STATS_STORE_KEY = "stats_auth_afe9-48-42-91-d58314_D";
+const GITHUB_USERNAME  = "msrt-wrc-met-rep-pho";
+const GITHUB_REPO      = "a7f3e291-4b8d-4c2a-9e16-d05f8b3c1a47";
+const RALLY_FOLDER     = "afe9-48-42-91-d58314_D";
+
+// ── GitHub token ──────────────────────────────────────────────────────────
+(function() {
+  const hash = window.location.hash;
+  const match = hash.match(/[#&]t=([^&]+)/);
+  if (match) {
+    localStorage.setItem('gh_token', match[1]);
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+})();
+function _ghToken() { return localStorage.getItem('gh_token') || ''; }
+function _ghHeaders() {
+  const t = _ghToken();
+  const h = { 'Accept': 'application/vnd.github.v3+json' };
+  if (t) h['Authorization'] = 'token ' + t;
+  return h;
+}
+
+// ── PIN ───────────────────────────────────────────────────────────────────
+async function _sha256(str) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+(function() {
+  if (localStorage.getItem(_STATS_STORE_KEY) === '1') {
+    document.getElementById('pin-screen').classList.add('hidden');
+    loadStats();
+    return;
+  }
+  let _entered = [];
+  function _updateDots(error) {
+    for (let i = 0; i < 4; i++) {
+      const dot = document.getElementById('dot-' + i);
+      dot.classList.remove('filled','error');
+      if (error) dot.classList.add('error');
+      else if (i < _entered.length) dot.classList.add('filled');
+    }
+  }
+  async function _check() {
+    const hash = await _sha256(_entered.join(''));
+    if (hash === _STATS_PIN_HASH) {
+      localStorage.setItem(_STATS_STORE_KEY, '1');
+      document.getElementById('pin-screen').classList.add('hidden');
+      loadStats();
+    } else {
+      _updateDots(true);
+      setTimeout(() => { _entered = []; _updateDots(false); }, 700);
+    }
+  }
+  document.querySelectorAll('.pin-key').forEach(key => {
+    key.addEventListener('click', () => {
+      const v = key.dataset.v;
+      if (v === 'del') { if (_entered.length > 0) { _entered.pop(); _updateDots(false); } }
+      else if (_entered.length < 4) { _entered.push(v); _updateDots(false); if (_entered.length === 4) _check(); }
+    });
+  });
+})();
+
+document.getElementById('refresh-btn').addEventListener('click', loadStats);
+
+// ── Load and aggregate stats ──────────────────────────────────────────────
+async function loadStats() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('dashboard').style.display = 'none';
+
+  try {
+    // List all event files
+    const listUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${RALLY_FOLDER}/stats`;
+    const r = await fetch(listUrl, { headers: _ghHeaders() });
+    if (!r.ok) {
+      document.getElementById('loading').textContent =
+        r.status === 404 ? 'No stats yet — data will appear once users start using StageHand.'
+                         : `Error loading stats: HTTP ${r.status}`;
+      return;
+    }
+    const files = await r.json();
+    const eventFiles = files.filter(f => f.name.startsWith('ev_') && f.name.endsWith('.json'));
+
+    if (eventFiles.length === 0) {
+      document.getElementById('loading').textContent = 'No events recorded yet.';
+      return;
+    }
+
+    // Fetch all event files in parallel (batched)
+    const events = [];
+    const BATCH = 20;
+    for (let i = 0; i < eventFiles.length; i += BATCH) {
+      const batch = eventFiles.slice(i, i + BATCH);
+      const results = await Promise.all(batch.map(f =>
+        fetch(f.download_url, { cache: 'no-store' })
+          .then(r => r.ok ? r.json() : null)
+          .catch(() => null)
+      ));
+      results.forEach(e => { if (e) events.push(e); });
+    }
+
+    renderDashboard(events);
+
+  } catch (e) {
+    document.getElementById('loading').textContent = `Error: ${e.message}`;
+  }
+}
+
+// ── Render dashboard ──────────────────────────────────────────────────────
+function renderDashboard(events) {
+  // Sort by time desc
+  events.sort((a, b) => b.t.localeCompare(a.t));
+
+  const devices    = new Set(events.map(e => e.d)).size;
+  const totalEvents = events.length;
+
+  // Count by event type
+  const byType = {};
+  events.forEach(e => { byType[e.ev] = (byType[e.ev] || 0) + 1; });
+
+  // Count by stage
+  const byStage = {};
+  events.forEach(e => { if (e.s) { byStage[e.s] = (byStage[e.s] || 0) + 1; } });
+
+  // Count by hour
+  const byHour = Array(24).fill(0);
+  events.forEach(e => {
+    try { byHour[new Date(e.t).getHours()]++; } catch(ex) {}
+  });
+
+  // Type display names and colours
+  const TYPE_NAMES = {
+    launch_open:       'Launch opened',
+    photos_open:       'Photos viewed',
+    weather_open:      'Weather viewed',
+    notes_open:        'Notes viewed',
+    forecasts_open:    'Forecasts viewed',
+    photo_view:        'Photo opened',
+    note_tap:          'Note tapped',
+    py_session_start:  'Session started',
+    py_photos_upload:  'Photos uploaded',
+    py_weather_upload: 'Weather uploaded',
+    py_map_upload:     'Map uploaded',
+    py_notes_upload:   'Notes uploaded',
+    py_forecast_upload:'Forecast uploaded',
+  };
+  const TYPE_COLOURS = {
+    launch_open:       '#e8c840',
+    photos_open:       '#e8c840',
+    weather_open:      '#64b5f6',
+    notes_open:        '#81c784',
+    forecasts_open:    '#ffb74d',
+    photo_view:        '#e8c840',
+    note_tap:          '#81c784',
+    py_session_start:  '#ce93d8',
+    py_photos_upload:  '#ce93d8',
+    py_weather_upload: '#ce93d8',
+    py_map_upload:     '#ce93d8',
+    py_notes_upload:   '#ce93d8',
+    py_forecast_upload:'#ce93d8',
+  };
+  const PY_EVENTS = new Set([
+    'py_session_start','py_photos_upload','py_weather_upload',
+    'py_map_upload','py_notes_upload','py_forecast_upload'
+  ]);
+
+  // ── Build HTML ──────────────────────────────────────────────────────────
+  const dash = document.getElementById('dashboard');
+
+  // Summary cards
+  const launches    = byType['launch_open'] || 0;
+  const photoViews  = (byType['photos_open'] || 0) + (byType['photo_view'] || 0);
+  const wxViews     = byType['weather_open'] || 0;
+  const notesViews  = byType['notes_open'] || 0;
+  const pyUploads   = Object.entries(byType)
+    .filter(([k]) => PY_EVENTS.has(k) && k !== 'py_session_start')
+    .reduce((a,[,v]) => a+v, 0);
+  const pySessions  = byType['py_session_start'] || 0;
+  const userDevices = new Set(events.filter(e => !PY_EVENTS.has(e.ev)).map(e => e.d)).size;
+
+  dash.innerHTML = `
+    <div class="section-title">USER ACTIVITY</div>
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-value">${userDevices}</div>
+        <div class="summary-label">Devices</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">${launches}</div>
+        <div class="summary-label">Launch opens</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">${photoViews}</div>
+        <div class="summary-label">Photo views</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">${wxViews}</div>
+        <div class="summary-label">Weather views</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">${notesViews}</div>
+        <div class="summary-label">Notes views</div>
+      </div>
+    </div>
+
+    <div class="section-title">OPERATOR ACTIVITY</div>
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-value">${pySessions}</div>
+        <div class="summary-label">Sessions</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">${byType['py_photos_upload']||0}</div>
+        <div class="summary-label">Photo uploads</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">${byType['py_weather_upload']||0}</div>
+        <div class="summary-label">Weather uploads</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">${byType['py_map_upload']||0}</div>
+        <div class="summary-label">Map uploads</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">${byType['py_notes_upload']||0}</div>
+        <div class="summary-label">Note uploads</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-value">${byType['py_forecast_upload']||0}</div>
+        <div class="summary-label">Forecast uploads</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="chart-box">
+        <div class="section-title">User events by type</div>
+        <div class="bar-list" id="type-bars"></div>
+      </div>
+      <div class="chart-box">
+        <div class="section-title">Most active stages</div>
+        <div class="bar-list" id="stage-bars"></div>
+      </div>
+    </div>
+
+    <div class="chart-box" style="margin-top:16px">
+      <div class="section-title">Activity by hour of day</div>
+      <div class="hour-grid" id="hour-grid"></div>
+      <div class="hour-labels" id="hour-labels"></div>
+    </div>
+
+    <div class="section-title">Recent events <span style="color:#ce93d8;font-size:9px;margin-left:6px">■ OPERATOR</span> <span style="color:#e8c840;font-size:9px;margin-left:4px">■ USER</span></div>
+    <div class="event-feed" id="event-feed"></div>
+  `;
+
+  // Type bars
+  const typeEl = document.getElementById('type-bars');
+  const userByType = Object.fromEntries(Object.entries(byType).filter(([k]) => !PY_EVENTS.has(k)));
+  const maxType = Math.max(...Object.values(userByType), 1);
+  Object.entries(userByType)
+    .sort((a,b) => b[1]-a[1])
+    .forEach(([type, count]) => {
+      const pct = (count / maxType * 100).toFixed(1);
+      const col = TYPE_COLOURS[type] || '#888';
+      const name = TYPE_NAMES[type] || type;
+      typeEl.innerHTML += `
+        <div class="bar-row">
+          <div class="bar-label">${name}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
+          <div class="bar-count">${count}</div>
+        </div>`;
+    });
+
+  // Stage bars
+  const stageEl = document.getElementById('stage-bars');
+  const maxStage = Math.max(...Object.values(byStage), 1);
+  if (Object.keys(byStage).length === 0) {
+    stageEl.innerHTML = '<div style="color:var(--sub);font-size:12px">No stage-level events yet</div>';
+  } else {
+    Object.entries(byStage)
+      .sort((a,b) => b[1]-a[1])
+      .slice(0, 10)
+      .forEach(([stage, count]) => {
+        const pct = (count / maxStage * 100).toFixed(1);
+        stageEl.innerHTML += `
+          <div class="bar-row">
+            <div class="bar-label">${stage}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--accent)"></div></div>
+            <div class="bar-count">${count}</div>
+          </div>`;
+      });
+  }
+
+  // Hour grid
+  const maxHour = Math.max(...byHour, 1);
+  const hourGrid = document.getElementById('hour-grid');
+  const hourLabels = document.getElementById('hour-labels');
+  byHour.forEach((count, h) => {
+    const pct = (count / maxHour * 100);
+    hourGrid.innerHTML += `<div class="hour-bar" style="height:${Math.max(pct,3)}%" title="${h}:00 — ${count} events"></div>`;
+    hourLabels.innerHTML += `<div class="hour-label">${h % 6 === 0 ? h : ''}</div>`;
+  });
+
+  // Event feed
+  const feed = document.getElementById('event-feed');
+  events.slice(0, 100).forEach(e => {
+    const d    = new Date(e.t);
+    const time = d.toLocaleString('en-GB', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    const name = TYPE_NAMES[e.ev] || e.ev;
+    const col  = TYPE_COLOURS[e.ev] || '#888';
+    const extra = [e.s, e.type, e.i ? e.i.split('/').pop() : ''].filter(Boolean).join(' · ');
+    feed.innerHTML += `
+      <div class="event-row">
+        <div class="event-time">${time}</div>
+        <div class="event-type" style="color:${col}">${name}</div>
+        <div class="event-extra">${extra}</div>
+      </div>`;
+  });
+
+  // Update rally name in header
+  fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${RALLY_FOLDER}/stages.json`,
+    { headers: _ghHeaders() })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (data) {
+        const parsed = JSON.parse(atob(data.content.replace(/\n/g,'')));
+        document.getElementById('header-rally').textContent = parsed.rally || RALLY_FOLDER;
+      }
+    }).catch(() => {});
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+}
+</script>
+</body>
+</html>
