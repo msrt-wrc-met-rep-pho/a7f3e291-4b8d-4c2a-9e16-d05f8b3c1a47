@@ -1,9 +1,0 @@
-{
-  "name": "Rally Portugal 2026 - V1",
-  "short_name": "Rally Portugal 2026 - V1",
-  "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
-  "orientation": "any",
-  "start_url": "./launch.html"
-}
