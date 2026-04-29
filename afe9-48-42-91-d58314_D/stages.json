@@ -9,9 +9,17 @@
       "divider_above": false,
       "rnc_span": 1,
       "count": 0,
-      "weather_count": 0,
+      "weather_count": 1,
       "notes_count": 0,
-      "latest_weather": {}
+      "latest_weather": {
+        "box": "Box 8(11.24km) -231",
+        "ground_shade": 23.3,
+        "ground_sun": 36.8,
+        "air_shade": 25.0,
+        "road": "Dry",
+        "weather": "Dry",
+        "visibility": "Good"
+      }
     },
     "SSS1": {
       "label": "Start",
