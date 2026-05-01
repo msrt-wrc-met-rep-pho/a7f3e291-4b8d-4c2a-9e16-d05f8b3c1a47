@@ -1,29 +1,27 @@
 {
   "rally": "Rally Portugal 2026 - v3",
-  "forecast_count": 0,
-  "latest_forecast": "",
+  "forecast_count": 3,
+  "latest_forecast": "Rally Canaries 2026 Weather Forecast V4.pdf",
   "stages": {
-    "SDA": {
-      "label": "Start",
+    "SD": {
+      "label": "5.5km",
       "has_rnc_icon": true,
       "divider_above": false,
-      "rnc_span": 2,
-      "count": 0,
-      "weather_count": 0,
+      "rnc_span": 1,
+      "count": 29,
+      "weather_count": 2,
       "notes_count": 0,
-      "latest_weather": {}
+      "latest_weather": {
+        "box": "Box1(0.00km) +430",
+        "ground_shade": 26.8,
+        "ground_sun": 40.5,
+        "air_shade": 24.7,
+        "road": "Dry",
+        "weather": "Dry",
+        "visibility": "Good"
+      }
     },
-    "SDB": {
-      "label": "Finish",
-      "has_rnc_icon": false,
-      "divider_above": false,
-      "rnc_span": 0,
-      "count": 0,
-      "weather_count": 0,
-      "notes_count": 0,
-      "latest_weather": {}
-    },
-    "SS1": {
+    "SSS1": {
       "label": "Start",
       "has_rnc_icon": true,
       "divider_above": true,
@@ -43,11 +41,21 @@
       "notes_count": 0,
       "latest_weather": {}
     },
-    "SS3": {
+    "SS3A": {
       "label": "5.82km",
       "has_rnc_icon": true,
       "divider_above": true,
-      "rnc_span": 1,
+      "rnc_span": 2,
+      "count": 0,
+      "weather_count": 0,
+      "notes_count": 0,
+      "latest_weather": {}
+    },
+    "SS3B": {
+      "label": "15.0km",
+      "has_rnc_icon": false,
+      "divider_above": false,
+      "rnc_span": 0,
       "count": 0,
       "weather_count": 0,
       "notes_count": 0,
@@ -103,15 +111,23 @@
       "notes_count": 0,
       "latest_weather": {}
     },
-    "SS8": {
+    "SSS8": {
       "label": "Start",
       "has_rnc_icon": true,
       "divider_above": true,
       "rnc_span": 1,
       "count": 0,
-      "weather_count": 0,
+      "weather_count": 2,
       "notes_count": 0,
-      "latest_weather": {}
+      "latest_weather": {
+        "box": "Box1(0.00km) +430",
+        "ground_shade": 26.8,
+        "ground_sun": 40.5,
+        "air_shade": 24.7,
+        "road": "Dry",
+        "weather": "Dry",
+        "visibility": "Good"
+      }
     },
     "SS9": {
       "label": "Finish",
@@ -168,102 +184,12 @@
       "has_rnc_icon": true,
       "divider_above": true,
       "rnc_span": 1,
-      "count": 0,
-      "weather_count": 0,
-      "notes_count": 0,
+      "count": 29,
+      "weather_count": 2,
+      "notes_count": 1,
       "latest_weather": {}
     },
-    "SS15": {
-      "label": "8.0km",
-      "has_rnc_icon": true,
-      "divider_above": true,
-      "rnc_span": 1,
-      "count": 0,
-      "weather_count": 0,
-      "notes_count": 0,
-      "latest_weather": {}
-    },
-    "SS16": {
-      "label": "8.0km",
-      "has_rnc_icon": true,
-      "divider_above": true,
-      "rnc_span": 1,
-      "count": 0,
-      "weather_count": 0,
-      "notes_count": 0,
-      "latest_weather": {}
-    },
-    "SS17": {
-      "label": "8.0km",
-      "has_rnc_icon": true,
-      "divider_above": true,
-      "rnc_span": 1,
-      "count": 0,
-      "weather_count": 0,
-      "notes_count": 0,
-      "latest_weather": {}
-    },
-    "SS18": {
-      "label": "8.0km",
-      "has_rnc_icon": true,
-      "divider_above": true,
-      "rnc_span": 1,
-      "count": 0,
-      "weather_count": 0,
-      "notes_count": 0,
-      "latest_weather": {}
-    },
-    "SS19": {
-      "label": "8.0km",
-      "has_rnc_icon": true,
-      "divider_above": true,
-      "rnc_span": 1,
-      "count": 0,
-      "weather_count": 0,
-      "notes_count": 0,
-      "latest_weather": {}
-    },
-    "SS20A": {
-      "label": "Start",
-      "has_rnc_icon": true,
-      "divider_above": true,
-      "rnc_span": 2,
-      "count": 0,
-      "weather_count": 0,
-      "notes_count": 0,
-      "latest_weather": {}
-    },
-    "SS20B": {
-      "label": "10.1km",
-      "has_rnc_icon": false,
-      "divider_above": false,
-      "rnc_span": 0,
-      "count": 0,
-      "weather_count": 0,
-      "notes_count": 0,
-      "latest_weather": {}
-    },
-    "SS21A": {
-      "label": "Start",
-      "has_rnc_icon": true,
-      "divider_above": true,
-      "rnc_span": 2,
-      "count": 0,
-      "weather_count": 0,
-      "notes_count": 0,
-      "latest_weather": {}
-    },
-    "SS21B": {
-      "label": "10.1km",
-      "has_rnc_icon": false,
-      "divider_above": false,
-      "rnc_span": 0,
-      "count": 0,
-      "weather_count": 0,
-      "notes_count": 0,
-      "latest_weather": {}
-    },
-    "SS22A": {
+    "SS15A": {
       "label": "8.0km",
       "has_rnc_icon": true,
       "divider_above": true,
@@ -273,7 +199,7 @@
       "notes_count": 0,
       "latest_weather": {}
     },
-    "SS22B": {
+    "SS15B": {
       "label": "18.1km",
       "has_rnc_icon": false,
       "divider_above": false,
@@ -283,7 +209,7 @@
       "notes_count": 0,
       "latest_weather": {}
     },
-    "SS23A": {
+    "SS16A": {
       "label": "Start",
       "has_rnc_icon": true,
       "divider_above": true,
@@ -293,7 +219,47 @@
       "notes_count": 0,
       "latest_weather": {}
     },
-    "SS23B": {
+    "SS16B": {
+      "label": "10.1km",
+      "has_rnc_icon": false,
+      "divider_above": false,
+      "rnc_span": 0,
+      "count": 0,
+      "weather_count": 0,
+      "notes_count": 0,
+      "latest_weather": {}
+    },
+    "SS17A": {
+      "label": "8.0km",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 2,
+      "count": 0,
+      "weather_count": 0,
+      "notes_count": 0,
+      "latest_weather": {}
+    },
+    "SS17B": {
+      "label": "18.1km",
+      "has_rnc_icon": false,
+      "divider_above": false,
+      "rnc_span": 0,
+      "count": 0,
+      "weather_count": 0,
+      "notes_count": 0,
+      "latest_weather": {}
+    },
+    "SS18A": {
+      "label": "Start",
+      "has_rnc_icon": true,
+      "divider_above": true,
+      "rnc_span": 2,
+      "count": 0,
+      "weather_count": 0,
+      "notes_count": 0,
+      "latest_weather": {}
+    },
+    "SS18B": {
       "label": "10.1km",
       "has_rnc_icon": false,
       "divider_above": false,
