@@ -117,9 +117,17 @@
       "divider_above": true,
       "rnc_span": 1,
       "count": 0,
-      "weather_count": 0,
+      "weather_count": 1,
       "notes_count": 0,
-      "latest_weather": {}
+      "latest_weather": {
+        "box": "Box1(0.00km) +430",
+        "ground_shade": 26.8,
+        "ground_sun": 40.5,
+        "air_shade": 24.7,
+        "road": "Dry",
+        "weather": "Dry",
+        "visibility": "Good"
+      }
     },
     "SS9": {
       "label": "Finish",
