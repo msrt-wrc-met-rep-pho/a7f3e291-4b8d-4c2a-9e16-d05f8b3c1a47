@@ -2,7 +2,7 @@
   "rally": "Rally Portugal 2026 - v3",
   "forecast_count": 0,
   "latest_forecast": "",
-  "meteo_admin_count": 0,
+  "meteo_admin_count": 1,
   "stages": {
     "SDA": {
       "label": "Start",
