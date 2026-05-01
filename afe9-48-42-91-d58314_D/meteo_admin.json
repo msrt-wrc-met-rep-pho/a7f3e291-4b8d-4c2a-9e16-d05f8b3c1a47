@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "type": "file",
+    "subtype": "pdf",
+    "filename": "CAN26 Meteo Schedule V1.pdf",
+    "size_kb": 259.6,
+    "uploaded_at": "21:51:24"
+  },
+  {
+    "type": "file",
+    "subtype": "pdf",
+    "filename": "POR26 - Itinerary V1.0 - 4.3.2026.pdf",
+    "size_kb": 885.2,
+    "uploaded_at": "21:51:24"
+  }
+]
